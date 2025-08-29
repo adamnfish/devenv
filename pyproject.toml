@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "devenv"
+version = "0.1.0"
+description = "CLI tool for managing ephemeral, branch-scoped Dev Container environments"
+authors = [{name = "devenv", email = "devenv@example.com"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.0",
+    "pyyaml>=6.0",
+    "docker>=6.0",
+]
+
+[project.scripts]
+devenv = "devenv.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/example/devenv"
+Repository = "https://github.com/example/devenv"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
