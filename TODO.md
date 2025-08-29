@@ -6,9 +6,9 @@ Building `devenv` - a CLI tool for managing ephemeral, branch-scoped Dev Contain
 
 ## Phase 1: Foundation (Small Steps)
 
-### 1. Set up basic Python project structure
-- [ ] Create `pyproject.toml` with minimal dependencies (click, pyyaml, docker)
-- [ ] Create basic directory structure:
+### 1. Set up basic Python project structure ✅ COMPLETED
+- [x] Create `pyproject.toml` with minimal dependencies (click, pyyaml, docker)
+- [x] Create basic directory structure:
   ```
   src/devenv/
   ├── __init__.py
@@ -19,25 +19,29 @@ Building `devenv` - a CLI tool for managing ephemeral, branch-scoped Dev Contain
       ├── docker.py     # Docker operations
       └── config.py     # Config loading
   ```
-- [ ] Set up entry point script that can be called as `devenv`
-- [ ] Test basic CLI responds to `devenv --help`
+- [x] Set up entry point script that can be called as `devenv`
+- [x] Test basic CLI responds to `devenv --help`
+- [x] Added `.mise.toml` with Python 3.11 for toolchain management
+- [x] Added comprehensive `.gitignore` file
+- [x] Installed package in development mode with `mise exec -- python -m pip install -e .`
 
-### 2. Implement simple CLI framework with basic commands
-- [ ] Create Click group in `cli.py` with main command structure
-- [ ] Add placeholder commands:
+### 2. Implement simple CLI framework with basic commands ✅ COMPLETED
+- [x] Create Click group in `cli.py` with main command structure
+- [x] Add placeholder commands:
   - `devenv init` - prints "init command (not implemented)"
   - `devenv create <branch>` - prints "create command (not implemented)"  
   - `devenv list` - prints "list command (not implemented)"
-- [ ] Test all commands respond correctly with help text
-- [ ] Add basic error handling and version flag
+- [x] Test all commands respond correctly with help text
+- [x] Add basic error handling and version flag
+- [x] Verified all commands work: `mise exec -- devenv --help`, `devenv init`, `devenv create test`, `devenv list`
 
-### 3. Create basic Docker label utilities for container discovery
-- [ ] Implement `docker.py` with functions:
+### 3. Create basic Docker label utilities for container discovery ✅ COMPLETED
+- [x] Implement `docker.py` with functions:
   - `find_devenv_containers()` - query all containers with `com.devenv.managed=true`
   - `find_container_by_branch(branch, repo)` - find specific container
   - `get_container_labels(container)` - extract devenv labels
-- [ ] Test with mock/actual Docker containers
-- [ ] Handle Docker not running gracefully
+- [x] Test with mock/actual Docker containers
+- [x] Handle Docker not running gracefully
 
 ### 4. Implement devenv init command with minimal config generation
 - [ ] Create basic project detection in `config.py`:

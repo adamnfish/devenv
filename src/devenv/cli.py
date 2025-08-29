@@ -4,6 +4,8 @@ CLI command definitions for devenv
 
 import click
 from . import __version__
+from .utils.docker import find_devenv_containers
+from .utils.cli_helpers import handle_docker_errors
 
 
 @click.group()
@@ -28,9 +30,16 @@ def create(branch):
 
 
 @cli.command()
+@handle_docker_errors
 def list():
     """List all managed dev containers"""
-    click.echo("devenv list - not implemented yet")
+    containers = find_devenv_containers()
+    if not containers:
+        click.echo("No devenv containers found")
+    else:
+        click.echo(f"Found {len(containers)} devenv containers")
+        for container in containers:
+            click.echo(f"- {container.name} ({container.status})")
 
 
 if __name__ == "__main__":
