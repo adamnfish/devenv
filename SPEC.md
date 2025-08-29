@@ -105,15 +105,6 @@ mounts:
 # Lifecycle commands
 post_create_command: "npm install"
 post_start_command: "npm run db:migrate"
-
-# Optional: Override base settings for specific languages
-# If not specified, sensible defaults are used based on detected language
-languages:
-  javascript:
-    package_manager: "pnpm"  # npm, yarn, pnpm
-  python:
-    version: "3.11"
-    package_manager: "poetry"  # pip, poetry, pipenv
 ```
 
 ### Minimal Config Example
@@ -170,12 +161,13 @@ This eliminates state sync issues and provides a single source of truth.
 - **Implementation:**
   1. Load `.devenv/config.yml` (error if not found)
   2. Merge configurations (base defaults → project → user → modules → CLI flags)
-  3. Generate devcontainer.json in temp directory
+  3. Generate devcontainer.json in temp directory (including mise setup)
   4. Generate unique container name: `devenv-<repo>-<branch>-<editor>`
   5. Add all metadata as Docker labels
-  6. Run appropriate CLI pointing to temp devcontainer.json
-  7. Execute hooks at appropriate stages
-  8. Clean up temp files
+  6. Add mise cache mount to container mounts
+  7. Run appropriate CLI pointing to temp devcontainer.json
+  8. Execute hooks at appropriate stages
+  9. Clean up temp files
 
 ### `devenv list`
 - **Description:** Query Docker for containers with `com.devenv.managed=true` label, display formatted output
@@ -212,7 +204,35 @@ main          def456ghi      jetbrains 8080               -             false
 
 ---
 
-## Built-in Modules
+## Toolchain Management with mise-en-place
+
+All dev containers will use [mise](https://mise.jdx.dev/) (mise-en-place) for consistent toolchain management across environments. This ensures developers have the exact versions of languages and tools required for each project, whether working in containers or directly on the host.
+
+### mise Integration
+- **Automatic installation**: mise is installed in all containers during creation
+- **Shared cache**: The host's `~/.local/share/mise` directory is mounted to avoid re-downloading tools
+- **Shell activation**: Automatic setup for bash and zsh (other shells can be configured via dotfiles)
+- **Project tools**: Defined using mise's standard configuration files in the project root
+
+### Tool Configuration
+Projects should define their tool versions using mise's standard configuration files, which work both in containers and on host machines:
+
+**Option 1: `.mise.toml`** (recommended)
+```toml
+[tools]
+node = "20.11.0"
+python = "3.11"
+go = "1.21"
+```
+
+**Option 2: `.tool-versions`** (asdf-compatible format)
+```
+node 20.11.0
+python 3.11
+go 1.21
+```
+
+These files are checked into the project repository and will be automatically detected and used by mise in both container and host environments. The mise cache mount ensures fast container startup times by reusing previously downloaded tools.
 
 The devenv tool ships with several built-in modules that can be activated via the `--modules` flag:
 
@@ -385,6 +405,12 @@ def detect_project_type(project_path):
     - Module activation via CLI flags
     - Module configuration merging
 
+11. **mise integration**
+    - Install mise in all containers via post-create hook
+    - Mount host mise cache directory (~/.local/share/mise)
+    - Configure shell activation for bash and zsh
+    - Run `mise install` to detect and install tools from .mise.toml, .tool-versions, etc.
+
 ### Phase 3: Advanced Features
 11. **Purge workflow**
     - Advanced filtering by age, taint status
@@ -415,12 +441,21 @@ def detect_project_type(project_path):
 def generate_devcontainer(config: dict, modules: list, user_config: dict) -> dict:
     """Generate devcontainer.json from merged configurations"""
     
+    # Base mounts always include mise cache
+    base_mounts = [
+        {
+            "source": "${localEnv:HOME}/.local/share/mise",
+            "target": "/home/vscode/.local/share/mise",
+            "type": "bind"
+        }
+    ]
+    
     devcontainer = {
         "name": config.get("name", "dev-environment"),
         "image": config.get("image"),  # or "dockerFile" if specified
         "forwardPorts": [p.split(":")[0] for p in config.get("ports", [])],
         "remoteEnv": config.get("environment", {}),
-        "mounts": config.get("mounts", []),
+        "mounts": base_mounts + config.get("mounts", []),
         "features": config.get("features", {}),
         "customizations": {
             "vscode": {
@@ -436,7 +471,7 @@ def generate_devcontainer(config: dict, modules: list, user_config: dict) -> dic
                 )
             }
         },
-        "postCreateCommand": config.get("post_create_command"),
+        "postCreateCommand": generate_post_create_command(config),
         "postStartCommand": config.get("post_start_command"),
         "runArgs": ["--label=com.devenv.managed=true", ...]
     }
@@ -447,6 +482,27 @@ def generate_devcontainer(config: dict, modules: list, user_config: dict) -> dic
         devcontainer = apply_module_to_config(devcontainer, module)
     
     return devcontainer
+
+def generate_post_create_command(config: dict) -> str:
+    """Generate post-create command including mise setup"""
+    commands = []
+    
+    # Install mise
+    commands.append("curl -fsSL https://mise.run | sh")
+    
+    # Setup shell activation
+    commands.append('echo \'eval "$(~/.local/bin/mise activate bash)"\' >> ~/.bashrc')
+    commands.append('echo \'eval "$(~/.local/bin/mise activate zsh)"\' >> ~/.zshrc')
+    
+    # Install tools from project's mise config files (.mise.toml, .tool-versions, etc)
+    # mise will automatically detect and use these files
+    commands.append("~/.local/bin/mise install")
+    
+    # Add user's post_create_command if specified
+    if "post_create_command" in config:
+        commands.append(config["post_create_command"])
+    
+    return " && ".join(commands)
 
 def create_container(branch: str, modules: list, editor: str):
     """Main creation flow"""
