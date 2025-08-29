@@ -578,11 +578,151 @@ docker update --label-add "com.devenv.tainted=true" <container_id>
 
 ---
 
-## Summary
+## Implementation Guidance for AI Assistants
 
-This specification provides a clear, actionable blueprint for implementing an ephemeral dev-environment CLI system that:
-- Enables per-feature isolation with IDE integration
-- Lets developers personalize environments via host-based configs and scripts
-- Supports dynamic modules and safe clean-up policies
-- Wraps established tooling (`devcontainer` CLI, `ijdevc`, Docker)
-- Minimizes configuration duplication through smart defaults and generation
+### Key Dependencies and Requirements
+
+**External CLI Tools Required:**
+- `docker` - Container runtime
+- `devcontainer` CLI - VS Code's devcontainer CLI (npm install -g @devcontainers/cli)
+- `ijdevc` - JetBrains IDE devcontainer CLI (if supporting IntelliJ)
+- `git` - For branch detection and repo information
+
+**Suggested Technology Stack:**
+- **Language**: Python 3.10+ (has good Docker SDK support)
+- **Config parsing**: YAML (PyYAML or similar)
+- **CLI framework**: Click (Python)
+- **Docker interaction**: Docker SDK or shell commands
+
+### Core Implementation Patterns
+
+**1. Docker Label Queries**
+```python
+# Example: Find all devenv containers
+def list_devenv_containers():
+    filters = {"label": ["com.devenv.managed=true"]}
+    containers = docker_client.containers.list(all=True, filters=filters)
+    return containers
+
+# Example: Find container by branch
+def find_container_by_branch(branch: str, repo: str):
+    filters = {
+        "label": [
+            "com.devenv.managed=true",
+            f"com.devenv.branch={branch}",
+            f"com.devenv.repo={repo}"
+        ]
+    }
+    containers = docker_client.containers.list(all=True, filters=filters)
+    return containers[0] if containers else None
+```
+
+**2. Config File Merging**
+```python
+# Priority order (lowest to highest)
+DEFAULT_CONFIG = {...}  # Built-in defaults
+
+def load_merged_config(project_path: str) -> dict:
+    config = DEFAULT_CONFIG.copy()
+    
+    # Load project config
+    if os.path.exists(f"{project_path}/.devenv/config.yml"):
+        project_config = load_yaml(f"{project_path}/.devenv/config.yml")
+        config = deep_merge(config, project_config)
+    
+    # Load user config
+    user_config_path = os.path.expanduser("~/.config/devenv/config.yml")
+    if os.path.exists(user_config_path):
+        user_config = load_yaml(user_config_path)
+        config = deep_merge(config, user_config)
+    
+    return config
+```
+
+**3. Temporary File Management**
+```python
+import tempfile
+import contextlib
+
+@contextlib.contextmanager
+def temp_devcontainer_json(config: dict):
+    """Create temporary devcontainer.json, yield path, then cleanup"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        devcontainer_path = os.path.join(tmpdir, "devcontainer.json")
+        with open(devcontainer_path, 'w') as f:
+            json.dump(config, f, indent=2)
+        yield devcontainer_path
+```
+
+### Error Handling Scenarios
+
+The implementation should handle these common error cases gracefully:
+
+1. **No .devenv/config.yml found** → Suggest running `devenv init`
+2. **Branch already has container** → Suggest `devenv switch` instead
+3. **Container name conflicts** → Add incremental suffix or error clearly
+4. **Docker not running** → Clear error message with fix instructions
+5. **Missing devcontainer CLI** → Provide installation instructions
+6. **Stale containers in Docker** → Detect and offer to clean up
+7. **Port conflicts** → Detect and suggest alternative ports
+8. **Missing mise config files** → Continue without error (mise will use defaults)
+
+### Testing Considerations
+
+**Unit Test Scenarios:**
+- Config merging with various precedence cases
+- Docker label generation and parsing
+- Container name sanitization (special characters, length limits)
+- Command argument parsing
+
+**Integration Test Scenarios:**
+- Create container → verify labels → list → switch → remove lifecycle
+- Module addition to existing container
+- Hook execution order
+- Port forwarding verification
+- mise installation and tool detection
+
+**Test Fixtures Needed:**
+- Sample project with `.devenv/config.yml`
+- Sample project with legacy `.devcontainer/devcontainer.json`
+- Sample `.mise.toml` and `.tool-versions` files
+- Mock user config directory
+
+### File Structure Suggestion
+
+```
+devenv/
+├── src/
+│   ├── __main__.py           # Entry point
+│   ├── cli.py                # Click/argparse command definitions
+│   ├── config.py             # Config loading and merging
+│   ├── docker_utils.py       # Docker operations and label management
+│   ├── devcontainer.py       # devcontainer.json generation
+│   ├── modules.py            # Built-in module definitions
+│   ├── hooks.py              # Hook execution logic
+│   └── mise.py               # mise integration utilities
+├── tests/
+│   ├── test_config.py
+│   ├── test_docker_utils.py
+│   └── fixtures/
+│       └── sample_projects/
+└── setup.py / pyproject.toml
+```
+
+### Development Workflow Suggestions
+
+1. **Start with `devenv init` and `devenv create`** - These form the core experience
+2. **Use mock/dry-run mode** - Add `--dry-run` flag to test without creating containers
+3. **Log all shell commands** - Add `--verbose` to show exact docker/devcontainer commands
+4. **Validate early** - Check for required tools (docker, devcontainer CLI) on startup
+5. **Fail fast with helpful errors** - Include suggested fixes in error messages
+
+### Common Pitfalls to Avoid
+
+1. **Don't assume container names are unique** - Always use full label queries
+2. **Don't parse docker output with regex** - Use JSON format or SDK
+3. **Don't store state that can be queried** - Always query Docker for truth
+4. **Don't hardcode paths** - Use os.path.expanduser() and Path objects
+5. **Don't forget Windows compatibility** - Use pathlib for cross-platform paths
+6. **Don't assume shells** - Check if bash/zsh exist before configuring
+7. **Don't block on IDE operations** - Some IDE integrations may need async handling
