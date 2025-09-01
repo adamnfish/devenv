@@ -43,21 +43,20 @@ Building `devenv` - a CLI tool for managing ephemeral, branch-scoped Dev Contain
 - [x] Test with mock/actual Docker containers
 - [x] Handle Docker not running gracefully
 
-### 4. Implement devenv init command with minimal config generation
-- [ ] Create basic project detection in `config.py`:
-  - Detect if `package.json` exists → Node.js project
-  - Detect if `requirements.txt` exists → Python project
-  - Default fallback for unknown projects
-- [ ] Generate minimal `.devenv/config.yml` with:
+### 4. Implement devenv init command with minimal config generation ✅ COMPLETED
+- [x] Simplified approach: Generate default config with project name from directory
+- [x] Uses vanilla Ubuntu 24.04 LTS base image (mise handles toolchain management)
+- [x] Generate minimal `.devenv/config.yml` with:
   ```yaml
-  name: "detected-project-name"
-  image: "mcr.microsoft.com/devcontainers/javascript-node:20"  # or python, etc.
-  ports:
-    - 3000:3000  # or 8000 for Python
+  name: "project-directory-name"
+  image: "mcr.microsoft.com/devcontainers/base:ubuntu-24.04"
+  # No default ports - only added if --port flag used
   ```
-- [ ] Create `.devenv/` directory if it doesn't exist
-- [ ] Handle existing config file (prompt to overwrite)
-- [ ] Test with sample projects
+- [x] Create `.devenv/` directory if it doesn't exist
+- [x] Handle existing config file with confirmation prompt
+- [x] Support `--force` flag to overwrite without prompting
+- [x] Support `--port 3000:3000` flag to add single port mapping
+- [x] Test with sample projects in test-sandbox/
 
 ### 5. Build basic config loading and merging logic
 - [ ] Implement `load_project_config()` - read `.devenv/config.yml`
