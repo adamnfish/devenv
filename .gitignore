@@ -222,3 +222,5 @@ tramp
 # devenv specific
 # Temporary devcontainer.json files generated during testing
 /tmp_devcontainer_*/
+# Test directory for safe testing
+/test-sandbox/

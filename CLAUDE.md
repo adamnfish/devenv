@@ -23,3 +23,20 @@ The project is installed in development mode, so changes to the code are reflect
 - When you complete a feature, notify the user so they can review it
 - Wait for user approval before updating `TODO.md` with progress or new tasks
 - Update `TODO.md` at the end of every completed feature to track progress
+
+## Testing
+
+Use the `test-sandbox/` directory for safe testing of devenv functionality:
+
+- `test-sandbox/` is in `.gitignore` to avoid cluttering the repository
+- Create subdirectories for different test scenarios: `mkdir -p test-sandbox/my-test-project`
+- Run devenv commands from within test directories to verify functionality
+- This provides a safe sandbox environment for AI tools without affecting the main project
+
+Example testing workflow:
+```bash
+mkdir -p test-sandbox/sample-project
+cd test-sandbox/sample-project
+mise exec -- devenv init
+mise exec -- devenv --help
+```
