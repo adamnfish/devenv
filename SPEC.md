@@ -56,6 +56,20 @@ my-repo/
 - **State tracking** = Docker container labels and metadata (no external state.json)
 - **devcontainer.json** = dynamically generated at runtime (unless explicitly provided)
 
+### Configuration Separation of Concerns
+
+**User-Level (`~/.config/devenv/`):**
+- Personal workflow preferences that apply across ALL projects
+- IDE plugin lists, hooks, and dotfiles for container initialization
+- Does NOT specify application-specific settings like base images or ports
+- These settings are merged for personalization, not application configuration
+
+**Project-Level (`.devenv/config.yml`):**
+- Application-specific container specification that applies for ALL users
+- Base image, environment variables, port mappings, and container features
+- Defines what the application needs to run, regardless of who is developing it
+- These settings are the authoritative source for the project's container requirements
+
 ---
 
 ## Project Configuration Schema (.devenv/config.yml)

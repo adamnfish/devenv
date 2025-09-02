@@ -224,3 +224,9 @@ tramp
 /tmp_devcontainer_*/
 # Test directory for safe testing
 /test-sandbox/
+
+# Test coverage reports
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
