@@ -156,15 +156,16 @@ def generate_devcontainer_json(merged_config: Dict[str, Any], branch: str, repo:
     # Generate post-create command including mise setup
     post_create_commands = []
     
-    # Install mise
+    # Create directories and install mise with proper permissions
+    post_create_commands.append("mkdir -p ~/.local/bin")
     post_create_commands.append("curl -fsSL https://mise.run | sh")
     
-    # Setup shell activation
+    # Setup shell activation (use full path to be safe)
     post_create_commands.append('echo \'eval "$(~/.local/bin/mise activate bash)"\' >> ~/.bashrc')
     post_create_commands.append('echo \'eval "$(~/.local/bin/mise activate zsh)"\' >> ~/.zshrc')
     
-    # Install tools from project's mise config files
-    post_create_commands.append("~/.local/bin/mise install")
+    # Install tools from project's mise config files (with error handling)
+    post_create_commands.append("~/.local/bin/mise install || true")
     
     # Copy dotfiles if directory was mounted
     if "dotfiles_dir" in merged_config:

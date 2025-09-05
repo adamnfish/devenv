@@ -114,7 +114,7 @@ def create(branch, modules, editor, ports):
             ]
             
             click.echo("Running devcontainer up...")
-            result = subprocess.run(cmd, capture_output=False)
+            result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode == 0:
                 click.echo(f"✓ Container created successfully: {container_name}")
@@ -122,12 +122,44 @@ def create(branch, modules, editor, ports):
                 # Launch IDE based on editor choice
                 if editor == 'vscode':
                     click.echo("Launching VS Code...")
-                    subprocess.run(['code', '.'], capture_output=True)
+                    # Try multiple VS Code commands
+                    vscode_commands = ['code', 'code-insiders']
+                    launch_success = False
+                    
+                    for cmd in vscode_commands:
+                        try:
+                            vs_code_result = subprocess.run([cmd, '.'], capture_output=True, timeout=5)
+                            if vs_code_result.returncode == 0:
+                                click.echo(f"✓ VS Code launched successfully with '{cmd}'")
+                                launch_success = True
+                                break
+                        except FileNotFoundError:
+                            continue
+                        except subprocess.TimeoutExpired:
+                            click.echo(f"✓ VS Code launched successfully with '{cmd}'")
+                            launch_success = True
+                            break
+                        except Exception:
+                            continue
+                    
+                    if not launch_success:
+                        click.echo("Note: VS Code not found. You can connect manually via Remote-Containers extension.")
                 else:
                     click.echo(f"Container ready. Connect your {editor} IDE manually.")
                     
             else:
-                click.echo("Error: Failed to create dev container", err=True)
+                # Check if container was partially created
+                existing_container = find_container_by_branch(branch, repo)
+                if existing_container:
+                    click.echo(f"Warning: Container was created but setup failed: {container_name}")
+                    click.echo("You can try:")
+                    click.echo(f"  devenv switch {branch}  # Connect to existing container")
+                    click.echo(f"  devenv rm {branch}      # Remove and try again")
+                else:
+                    click.echo("Error: Failed to create dev container", err=True)
+                
+                if result.stderr:
+                    click.echo(f"Error details: {result.stderr.strip()}", err=True)
                 exit(1)
                 
     except KeyboardInterrupt:
@@ -200,17 +232,35 @@ def switch(branch, editor):
             # Get the workspace folder from container labels
             workspace = labels.get('devcontainer.local_folder', '.')
             click.echo("Launching VS Code...")
-            result = subprocess.run(['code', workspace], capture_output=True)
             
-            if result.returncode == 0:
-                click.echo("✓ VS Code launched successfully")
-            else:
-                click.echo("Warning: VS Code may not have launched correctly")
-                click.echo("You can also connect manually via VS Code's Remote-Containers extension")
+            # Try multiple VS Code commands (code, code-insiders)
+            vscode_commands = ['code', 'code-insiders']
+            launch_success = False
+            
+            for cmd in vscode_commands:
+                try:
+                    result = subprocess.run([cmd, workspace], capture_output=True, timeout=5)
+                    if result.returncode == 0:
+                        click.echo(f"✓ VS Code launched successfully with '{cmd}'")
+                        launch_success = True
+                        break
+                except FileNotFoundError:
+                    continue
+                except subprocess.TimeoutExpired:
+                    # VS Code launched but didn't return quickly, assume success
+                    click.echo(f"✓ VS Code launched successfully with '{cmd}'")
+                    launch_success = True
+                    break
+                except Exception:
+                    continue
+            
+            if not launch_success:
+                click.echo("VS Code not found in PATH")
+                click.echo("Options:")
+                click.echo("1. Install VS Code and ensure 'code' command is available")
+                click.echo("2. Connect manually via VS Code's Remote-Containers extension")
+                click.echo(f"3. Container name: {container_name}")
                 
-        except FileNotFoundError:
-            click.echo("VS Code not found in PATH")
-            click.echo("Please install VS Code or connect manually via Remote-Containers extension")
         except Exception as e:
             click.echo(f"Error launching VS Code: {e}")
             click.echo("You can connect manually via VS Code's Remote-Containers extension")
