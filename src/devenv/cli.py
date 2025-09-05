@@ -339,43 +339,6 @@ def rm(branch, volumes, force):
 
 
 @cli.command()
-@click.argument('branch')
-@handle_docker_errors
-def taint(branch):
-    """Mark a container as tainted (for cleanup tracking)"""
-    
-    # Get repository name
-    repo = os.path.basename(os.path.abspath('.'))
-    
-    # Find existing container
-    container = find_container_by_branch(branch, repo)
-    
-    if not container:
-        click.echo(f"No container found for branch '{branch}' in repository '{repo}'")
-        exit(1)
-    
-    container_name = container.name
-    
-    try:
-        # Update the taint label using docker command since Python SDK doesn't support label updates
-        subprocess.run([
-            'docker', 'update', 
-            '--label-add', 'com.devenv.tainted=true',
-            container.id
-        ], check=True, capture_output=True)
-        
-        click.echo(f"✓ Container marked as tainted: {container_name}")
-        click.echo("Use 'devenv purge --tainted' to clean up tainted containers")
-        
-    except subprocess.CalledProcessError as e:
-        click.echo(f"Error updating container labels: {e}", err=True)
-        exit(1)
-    except Exception as e:
-        click.echo(f"Error marking container as tainted: {e}", err=True)
-        exit(1)
-
-
-@cli.command()
 def modules():
     """List available built-in modules"""
     list_modules()

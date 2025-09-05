@@ -68,7 +68,6 @@ def generate_docker_labels(branch: str, repo: str, repo_path: str, editor: str =
         f"--label=com.devenv.branch={branch}",
         f"--label=com.devenv.editor={editor}",
         f"--label=com.devenv.created={datetime.utcnow().isoformat()}Z",
-        "--label=com.devenv.tainted=false",
     ]
     
     if modules:

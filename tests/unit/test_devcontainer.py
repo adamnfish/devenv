@@ -70,7 +70,6 @@ class TestGenerateDockerLabels:
             "--label=com.devenv.branch=main",
             "--label=com.devenv.editor=vscode",
             "--label=com.devenv.created=2025-01-15T10:30:00Z",
-            "--label=com.devenv.tainted=false",
             "--label=com.devenv.modules="
         ]
         

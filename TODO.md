@@ -152,14 +152,7 @@ docker = "^6.0"
 - [x] Comprehensive error handling with clear messages
 - [x] Confirmation prompts for safety
 
-### 11. Implement devenv taint command ✅ COMPLETED
-- [x] Mark containers as tainted using Docker label updates
-- [x] Use `docker update --label-add` for live label modification
-- [x] Update `com.devenv.tainted=true` label
-- [x] Provide guidance about using `devenv purge --tainted` for cleanup
-- [x] Proper error handling for Docker command failures
-
-### 12. Add comprehensive module system ✅ COMPLETED
+### 11. Add comprehensive module system ✅ COMPLETED
 - [x] Built-in module definitions (claude-code, docker-in-docker)
 - [x] Module validation and error handling
 - [x] Dynamic devcontainer.json modification based on active modules
@@ -183,7 +176,6 @@ docker = "^6.0"
 - ✅ `devenv list` - List and inspect containers
 - ✅ `devenv switch` - Connect to existing containers
 - ✅ `devenv rm` - Remove containers safely
-- ✅ `devenv taint` - Mark containers for cleanup
 - ✅ `devenv modules` - Browse available modules
 
 **Advanced Module System:**
@@ -198,7 +190,7 @@ docker = "^6.0"
 
 ## Next Steps (Phase 3)
 - Hook system (pre/post lifecycle events)
-- Purge command with advanced filtering
+- Taint/purge system for advanced cleanup workflows
 - Additional built-in modules
 - Project language/framework detection for smarter defaults
 - Custom module support (.devenv/modules/)

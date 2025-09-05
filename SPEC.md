@@ -149,8 +149,7 @@ labels:
   com.devenv.branch: "feature-xyz"     # Git branch name
   com.devenv.editor: "vscode"          # IDE type
   com.devenv.created: "2025-01-15T10:30:00Z"
-  com.devenv.tainted: "false"          # Taint flag
-  com.devenv.modules: "claude-code,gpu" # Comma-separated active modules
+  com.devenv.modules: "claude-code,docker-in-docker" # Comma-separated active modules
 ```
 
 This eliminates state sync issues and provides a single source of truth.
@@ -188,9 +187,9 @@ This eliminates state sync issues and provides a single source of truth.
 - **No state file needed** - pure Docker query
 - **Output format:**
 ```
-BRANCH        CONTAINER_ID   EDITOR    PORTS              MODULES       TAINTED
-feature-xyz   abc123def      vscode    3000,5432,6379     claude-code   false
-main          def456ghi      jetbrains 8080               -             false
+BRANCH        CONTAINER_ID   EDITOR    PORTS              MODULES
+feature-xyz   abc123def      vscode    3000,5432,6379     claude-code
+main          def456ghi      jetbrains 8080               -
 ```
 
 ### `devenv switch <branch>`
@@ -201,9 +200,6 @@ main          def456ghi      jetbrains 8080               -             false
 ### `devenv module add <branch> <module>`
 - **Description:** Stops container, rebuilds with additional module config merged, restarts
 - **Updates label:** `com.devenv.modules` 
-
-### `devenv taint <branch>`
-- **Description:** Updates Docker container label `com.devenv.tainted=true`
 
 ### `devenv rm <branch>`
 - **Flags:** `--volumes`
@@ -392,8 +388,7 @@ def detect_project_type(project_path):
    - IDE attachment logic
 
 ### Phase 2: Essential Features
-6. **Taint & rm commands**
-   - Label update operations
+6. **Remove commands**
    - Safe cleanup with volume handling
 
 7. **Plugin merging**
@@ -420,7 +415,8 @@ def detect_project_type(project_path):
     - Run `mise install` to detect and install tools from .mise.toml, .tool-versions, etc.
 
 ### Phase 3: Advanced Features
-11. **Purge workflow**
+11. **Taint & purge workflow**
+    - Container tainting for cleanup tracking
     - Advanced filtering by age, taint status
     - Batch operations with confirmation
 

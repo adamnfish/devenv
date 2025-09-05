@@ -60,13 +60,6 @@ devenv rm feature-auth --volumes
 devenv rm old-branch --force
 ```
 
-### devenv taint
-Mark a container as tainted for cleanup tracking.
-
-```bash
-devenv taint main
-```
-
 ### devenv modules
 List available built-in modules.
 
@@ -90,6 +83,5 @@ devenv uses Docker labels for state management instead of external files. Each m
 - `com.devenv.branch=<name>`: Git branch name
 - `com.devenv.editor=<type>`: IDE type (vscode or jetbrains)
 - `com.devenv.modules=<list>`: Comma-separated active modules
-- `com.devenv.tainted=<bool>`: Cleanup tracking flag
 
 These labels enable stateless operation and reliable container discovery across sessions.
