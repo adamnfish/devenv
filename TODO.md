@@ -58,52 +58,50 @@ Building `devenv` - a CLI tool for managing ephemeral, branch-scoped Dev Contain
 - [x] Support `--port 3000:3000` flag to add single port mapping
 - [x] Test with sample projects in test-sandbox/
 
-### 5. Build basic config loading and merging logic
-- [ ] Implement `load_project_config()` - read `.devenv/config.yml`
-- [ ] Implement `load_user_config()` - read `~/.config/devenv/config.yml` (optional)
-- [ ] Implement `merge_configs()` - simple dict merge with project taking precedence
-- [ ] Add validation for required fields (name, image)
-- [ ] Test with various config combinations
+### 5. Build basic config loading and merging logic ✅ COMPLETED
+- [x] Implement `load_project_config()` - read `.devenv/config.yml`
+- [x] Implement `load_user_config()` - read `~/.config/devenv/` directory structure  
+- [x] Implement `merge_configs()` - proper separation of concerns (project vs user config)
+- [x] Add validation for required fields (name, image)
+- [x] Test with various config combinations
+- [x] Added comprehensive unit and integration tests
 
-### 6. Create minimal devcontainer.json generation
-- [ ] Implement `generate_devcontainer_json(merged_config)` in new file `devcontainer.py`
-- [ ] Generate basic devcontainer.json structure:
-  ```json
-  {
-    "name": "config.name",
-    "image": "config.image",
-    "forwardPorts": ["extracted from config.ports"],
-    "runArgs": ["--label=com.devenv.managed=true", "--label=com.devenv.branch=<branch>"]
-  }
-  ```
-- [ ] Write to temporary directory and return path
-- [ ] Test generation with sample configs
+### 6. Create minimal devcontainer.json generation ✅ COMPLETED
+- [x] Implement `generate_devcontainer_json(merged_config)` in new file `devcontainer.py`
+- [x] Generate comprehensive devcontainer.json structure with:
+  - Container naming, image, port forwarding
+  - Environment variables, features, mounts  
+  - IDE customizations (VS Code & JetBrains)
+  - mise integration for toolchain management
+  - Docker labels for state management
+- [x] Write to temporary directory with context manager cleanup
+- [x] Test generation with sample configs
+- [x] Added comprehensive unit tests (20 test cases)
 
-### 7. Implement basic devenv create command
-- [ ] Check if `.devenv/config.yml` exists (error if not)
-- [ ] Load and merge configs
-- [ ] Generate temporary devcontainer.json
-- [ ] Generate container name: `devenv-<repo>-<branch>-vscode`
-- [ ] Call devcontainer CLI: `devcontainer up --workspace-folder . --config <temp-config>`
-- [ ] Clean up temporary files
-- [ ] Handle basic error cases (branch already exists, Docker not running)
-- [ ] Test with a real project
+### 7. Implement basic devenv create command ✅ COMPLETED
+- [x] Check if `.devenv/config.yml` exists (error if not)
+- [x] Load and merge configs using new config system
+- [x] Generate temporary devcontainer.json using new devcontainer module
+- [x] Generate container name: `devenv-<repo>-<branch>-<editor>`
+- [x] Call devcontainer CLI: `devcontainer up --workspace-folder . --config <temp-config>`
+- [x] Clean up temporary files automatically
+- [x] Handle error cases (branch already exists, Docker not running, missing devcontainer CLI)
+- [x] Support `--modules`, `--editor`, and `--ports` flags
+- [x] IDE integration (VS Code launch, JetBrains manual connection)
 
-### 8. Add devenv list command to query Docker containers by labels
-- [ ] Query Docker for containers with `com.devenv.managed=true` label
-- [ ] Parse container labels to extract:
-  - Branch name
-  - Repository
-  - Container ID
-  - Status (running/stopped)
-- [ ] Display in formatted table:
+### 8. Add devenv list command to query Docker containers by labels ✅ COMPLETED
+- [x] Query Docker for containers with `com.devenv.managed=true` label
+- [x] Parse container labels to extract:
+  - Branch name, Repository, Container ID, Status, Editor
+  - Active modules, Port mappings
+- [x] Display in formatted table:
   ```
-  BRANCH        CONTAINER_ID   STATUS    PORTS
-  feature-xyz   abc123def      running   3000,5432
-  main          def456ghi      stopped   8080
+  BRANCH        CONTAINER_ID   STATUS    EDITOR    PORTS
+  feature-xyz   abc123def      running   vscode    3000,5432
+  main          def456ghi      stopped   jetbrains 8080
   ```
-- [ ] Handle no containers found case
-- [ ] Test with real containers
+- [x] Handle no containers found case
+- [x] Show modules and total container count
 
 ## Implementation Notes
 
