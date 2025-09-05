@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from datetime import datetime
 
 from .config import load_and_merge_config
+from .modules import apply_modules_to_devcontainer, validate_modules
 
 
 def extract_ports_from_config(ports: Optional[List[str]]) -> List[int]:
@@ -183,6 +184,10 @@ def generate_devcontainer_json(merged_config: Dict[str, Any], branch: str, repo:
     # Add Docker labels for container identification
     docker_labels = generate_docker_labels(branch, repo, repo_path, editor, modules)
     devcontainer["runArgs"] = docker_labels
+    
+    # Apply modules to devcontainer configuration
+    if modules:
+        devcontainer = apply_modules_to_devcontainer(devcontainer, modules)
     
     return devcontainer
 

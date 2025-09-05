@@ -10,6 +10,7 @@ from .utils.docker import find_devenv_containers, find_container_by_branch
 from .utils.cli_helpers import handle_docker_errors
 from .utils.config import generate_default_config, write_config_file, config_exists, load_and_merge_config
 from .utils.devcontainer import create_devcontainer_from_config, get_container_name
+from .utils.modules import validate_modules, list_modules
 
 
 @click.group()
@@ -70,8 +71,14 @@ def create(branch, modules, editor, ports):
         click.echo("Error: No .devenv/config.yml found. Run 'devenv init' first.", err=True)
         exit(1)
     
-    # Parse modules list
+    # Parse and validate modules list
     modules_list = [m.strip() for m in modules.split(',')] if modules else []
+    if modules_list:
+        try:
+            validate_modules(modules_list)
+        except ValueError as e:
+            click.echo(f"Error: {e}", err=True)
+            exit(1)
     
     # Get repository name and check for existing container
     repo = os.path.basename(os.path.abspath('.'))
@@ -132,6 +139,100 @@ def create(branch, modules, editor, ports):
 
 
 @cli.command()
+@click.argument('branch')
+@click.option('--editor', type=click.Choice(['vscode', 'jetbrains']), 
+              help='Override editor type for this session')
+@handle_docker_errors  
+def switch(branch, editor):
+    """Switch to an existing dev container for the specified branch"""
+    
+    # Get repository name
+    repo = os.path.basename(os.path.abspath('.'))
+    
+    # Find existing container
+    container = find_container_by_branch(branch, repo)
+    
+    if not container:
+        click.echo(f"No container found for branch '{branch}' in repository '{repo}'")
+        click.echo("Available containers:")
+        
+        # Show available containers for this repo
+        all_containers = find_devenv_containers()
+        repo_containers = [c for c in all_containers 
+                          if c.attrs.get('Config', {}).get('Labels', {}).get('com.devenv.repo') == repo]
+        
+        if repo_containers:
+            for c in repo_containers:
+                labels = c.attrs.get('Config', {}).get('Labels', {})
+                branch_name = labels.get('com.devenv.branch', 'unknown')
+                editor_type = labels.get('com.devenv.editor', 'unknown')
+                click.echo(f"  - {branch_name} ({editor_type})")
+        else:
+            click.echo("  None found for this repository")
+        
+        exit(1)
+    
+    # Get container info
+    labels = container.attrs.get('Config', {}).get('Labels', {})
+    container_editor = labels.get('com.devenv.editor', 'vscode')
+    container_name = container.name
+    
+    # Use specified editor or default to container's editor
+    target_editor = editor or container_editor
+    
+    # Check if container is running
+    if container.status != 'running':
+        click.echo(f"Starting container: {container_name}")
+        try:
+            container.start()
+            click.echo("Container started successfully")
+        except Exception as e:
+            click.echo(f"Error starting container: {e}", err=True)
+            exit(1)
+    
+    click.echo(f"Connecting to container: {container_name}")
+    click.echo(f"Branch: {branch}")
+    click.echo(f"Editor: {target_editor}")
+    
+    # Launch IDE based on editor choice
+    if target_editor == 'vscode':
+        try:
+            # Get the workspace folder from container labels
+            workspace = labels.get('devcontainer.local_folder', '.')
+            click.echo("Launching VS Code...")
+            result = subprocess.run(['code', workspace], capture_output=True)
+            
+            if result.returncode == 0:
+                click.echo("✓ VS Code launched successfully")
+            else:
+                click.echo("Warning: VS Code may not have launched correctly")
+                click.echo("You can also connect manually via VS Code's Remote-Containers extension")
+                
+        except FileNotFoundError:
+            click.echo("VS Code not found in PATH")
+            click.echo("Please install VS Code or connect manually via Remote-Containers extension")
+        except Exception as e:
+            click.echo(f"Error launching VS Code: {e}")
+            click.echo("You can connect manually via VS Code's Remote-Containers extension")
+    
+    elif target_editor == 'jetbrains':
+        click.echo("For JetBrains IDEs:")
+        click.echo("1. Open your JetBrains IDE (IntelliJ, PyCharm, etc.)")
+        click.echo(f"2. Use 'Services' panel to connect to container: {container_name}")
+        click.echo("3. Or use the Dev Containers plugin if available")
+        
+        # Try to show container connection info
+        click.echo(f"\nContainer details:")
+        click.echo(f"  Name: {container_name}")
+        click.echo(f"  ID: {container.short_id}")
+    
+    else:
+        click.echo(f"Editor '{target_editor}' not supported")
+        click.echo("Supported editors: vscode, jetbrains")
+        exit(1)
+
+
+@cli.command()
 @handle_docker_errors
 def list():
     """List all managed dev containers"""
@@ -173,3 +274,108 @@ def list():
             click.echo(f"{'':>20} modules: {modules}")
     
     click.echo(f"\nTotal: {len(containers)} containers")
+
+
+@cli.command()
+@click.argument('branch')
+@click.option('--volumes', is_flag=True, help='Also remove associated volumes')
+@click.option('--force', '-f', is_flag=True, help='Force removal without confirmation')
+@handle_docker_errors
+def rm(branch, volumes, force):
+    """Remove a dev container for the specified branch"""
+    
+    # Get repository name
+    repo = os.path.basename(os.path.abspath('.'))
+    
+    # Find existing container
+    container = find_container_by_branch(branch, repo)
+    
+    if not container:
+        click.echo(f"No container found for branch '{branch}' in repository '{repo}'")
+        exit(1)
+    
+    # Get container info
+    labels = container.attrs.get('Config', {}).get('Labels', {})
+    container_name = container.name
+    container_id = container.short_id
+    editor = labels.get('com.devenv.editor', 'unknown')
+    modules = labels.get('com.devenv.modules', '')
+    
+    # Show container info
+    click.echo(f"Container to remove:")
+    click.echo(f"  Branch: {branch}")
+    click.echo(f"  Name: {container_name}")
+    click.echo(f"  ID: {container_id}")
+    click.echo(f"  Editor: {editor}")
+    if modules:
+        click.echo(f"  Modules: {modules}")
+    click.echo(f"  Status: {container.status}")
+    
+    # Confirmation unless forced
+    if not force:
+        if not click.confirm(f"Are you sure you want to remove this container?"):
+            click.echo("Removal cancelled.")
+            return
+    
+    try:
+        # Stop container if running
+        if container.status == 'running':
+            click.echo("Stopping container...")
+            container.stop(timeout=10)
+            click.echo("Container stopped")
+        
+        # Remove container
+        click.echo("Removing container...")
+        container.remove(v=volumes)  # v=volumes removes anonymous volumes
+        
+        click.echo(f"✓ Container removed: {container_name}")
+        
+        if volumes:
+            click.echo("✓ Associated volumes removed")
+            
+    except Exception as e:
+        click.echo(f"Error removing container: {e}", err=True)
+        exit(1)
+
+
+@cli.command()
+@click.argument('branch')
+@handle_docker_errors
+def taint(branch):
+    """Mark a container as tainted (for cleanup tracking)"""
+    
+    # Get repository name
+    repo = os.path.basename(os.path.abspath('.'))
+    
+    # Find existing container
+    container = find_container_by_branch(branch, repo)
+    
+    if not container:
+        click.echo(f"No container found for branch '{branch}' in repository '{repo}'")
+        exit(1)
+    
+    container_name = container.name
+    
+    try:
+        # Update the taint label using docker command since Python SDK doesn't support label updates
+        subprocess.run([
+            'docker', 'update', 
+            '--label-add', 'com.devenv.tainted=true',
+            container.id
+        ], check=True, capture_output=True)
+        
+        click.echo(f"✓ Container marked as tainted: {container_name}")
+        click.echo("Use 'devenv purge --tainted' to clean up tainted containers")
+        
+    except subprocess.CalledProcessError as e:
+        click.echo(f"Error updating container labels: {e}", err=True)
+        exit(1)
+    except Exception as e:
+        click.echo(f"Error marking container as tainted: {e}", err=True)
+        exit(1)
+
+
+@cli.command()
+def modules():
+    """List available built-in modules"""
+    list_modules()

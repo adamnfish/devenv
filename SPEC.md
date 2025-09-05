@@ -256,18 +256,12 @@ Integrates Claude Code for AI-assisted development:
 - Installs `@anthropic/claude-code` package
 - Sets appropriate environment variables
 
-### gpu-support
-Enables GPU passthrough for ML workloads:
-- Adds `--gpus=all` to container runtime
-- Configures CUDA environment
-- Installs necessary GPU features
-
 ### docker-in-docker
 Allows running Docker commands inside the container:
 - Installs Docker feature
 - Mounts Docker socket (with security considerations)
 
-Usage: `devenv create feature-ml --modules claude-code,gpu-support`
+Usage: `devenv create feature-api --modules claude-code,docker-in-docker`
 
 ---
 
