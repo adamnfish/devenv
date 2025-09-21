@@ -62,14 +62,45 @@ def init(force, port):
 @click.option('--editor', default='vscode', type=click.Choice(['vscode', 'jetbrains']), 
               help='IDE type (default: vscode)')
 @click.option('--ports', help='Additional port mappings (comma-separated)')
-@handle_docker_errors
-def create(branch, modules, editor, ports):
+@click.option('--dry-run', is_flag=True, help='Show generated devcontainer.json without creating container')
+def create(branch, modules, editor, ports, dry_run):
     """Create a new dev container for the specified branch"""
+    
+    # Apply Docker error handling only for non-dry-run mode
+    if not dry_run:
+        from .utils.cli_helpers import check_docker_available
+        check_docker_available()
     
     # Check if project config exists
     if not config_exists('.devenv/config.yml'):
         click.echo("Error: No .devenv/config.yml found. Run 'devenv init' first.", err=True)
         exit(1)
+    
+    # Handle dry-run mode early to skip Docker checks
+    if dry_run:
+        click.echo("DRY RUN MODE: Generating devcontainer.json without creating container")
+        
+        # Parse and validate modules list
+        modules_list = [m.strip() for m in modules.split(',')] if modules else []
+        if modules_list:
+            try:
+                validate_modules(modules_list)
+            except ValueError as e:
+                click.echo(f"Error: {e}", err=True)
+                exit(1)
+        
+        # Generate and display devcontainer.json
+        try:
+            with create_devcontainer_from_config('.', branch, editor, modules_list) as devcontainer_path:
+                click.echo("=== Generated devcontainer.json ===")
+                with open(devcontainer_path, 'r') as f:
+                    content = f.read()
+                    click.echo(content)
+                click.echo("=== End of generated configuration ===")
+                return
+        except Exception as e:
+            click.echo(f"Error generating configuration: {e}", err=True)
+            exit(1)
     
     # Parse and validate modules list
     modules_list = [m.strip() for m in modules.split(',')] if modules else []

@@ -12,6 +12,7 @@ from datetime import datetime
 
 from .config import load_and_merge_config
 from .modules import apply_modules_to_devcontainer, validate_modules
+from .hooks import generate_post_create_command_with_hooks, generate_post_start_command_with_hooks
 
 
 def extract_ports_from_config(ports: Optional[List[str]]) -> List[int]:
@@ -78,7 +79,7 @@ def generate_docker_labels(branch: str, repo: str, repo_path: str, editor: str =
     return labels
 
 
-def generate_devcontainer_json(merged_config: Dict[str, Any], branch: str, repo: str, repo_path: str, editor: str = "vscode", modules: Optional[List[str]] = None) -> Dict[str, Any]:
+def generate_devcontainer_json(merged_config: Dict[str, Any], branch: str, repo: str, repo_path: str, editor: str = "vscode", modules: Optional[List[str]] = None, project_path: str = ".") -> Dict[str, Any]:
     """
     Generate devcontainer.json from merged configuration.
     
@@ -89,6 +90,7 @@ def generate_devcontainer_json(merged_config: Dict[str, Any], branch: str, repo:
         repo_path: Full path to repository
         editor: IDE type (vscode or jetbrains)
         modules: List of active modules
+        project_path: Path to project directory (for hook discovery)
         
     Returns:
         devcontainer.json dictionary
@@ -153,33 +155,13 @@ def generate_devcontainer_json(merged_config: Dict[str, Any], branch: str, repo:
     if customizations:
         devcontainer["customizations"] = customizations
     
-    # Generate post-create command including mise setup
-    post_create_commands = []
+    # Generate post-create command including mise setup and hooks
+    devcontainer["postCreateCommand"] = generate_post_create_command_with_hooks(merged_config, project_path)
     
-    # Create directories and install mise with proper permissions
-    post_create_commands.append("mkdir -p ~/.local/bin")
-    post_create_commands.append("curl -fsSL https://mise.run | sh")
-    
-    # Setup shell activation (use full path to be safe)
-    post_create_commands.append('echo \'eval "$(~/.local/bin/mise activate bash)"\' >> ~/.bashrc')
-    post_create_commands.append('echo \'eval "$(~/.local/bin/mise activate zsh)"\' >> ~/.zshrc')
-    
-    # Install tools from project's mise config files (with error handling)
-    post_create_commands.append("~/.local/bin/mise install || true")
-    
-    # Copy dotfiles if directory was mounted
-    if "dotfiles_dir" in merged_config:
-        post_create_commands.append("cp -r /tmp/devenv-dotfiles/. ~/")
-    
-    # Add user's post_create_command if specified
-    if "post_create_command" in merged_config:
-        post_create_commands.append(merged_config["post_create_command"])
-    
-    devcontainer["postCreateCommand"] = " && ".join(post_create_commands)
-    
-    # Add post-start command if specified
-    if "post_start_command" in merged_config:
-        devcontainer["postStartCommand"] = merged_config["post_start_command"]
+    # Generate post-start command including hooks
+    post_start_command = generate_post_start_command_with_hooks(merged_config, project_path)
+    if post_start_command:
+        devcontainer["postStartCommand"] = post_start_command
     
     # Add Docker labels for container identification
     docker_labels = generate_docker_labels(branch, repo, repo_path, editor, modules)
@@ -234,7 +216,7 @@ def create_devcontainer_from_config(project_path: str = ".", branch: str = "main
     
     # Generate devcontainer.json
     devcontainer_config = generate_devcontainer_json(
-        merged_config, branch, repo, repo_path, editor, modules
+        merged_config, branch, repo, repo_path, editor, modules, project_path
     )
     
     # Return context manager for temporary file
