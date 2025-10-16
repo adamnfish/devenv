@@ -24,7 +24,7 @@ def generate_default_config(project_path: str = ".", ports: Optional[list] = Non
     
     config = {
         "name": project_path.resolve().name,
-        "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04"
+        "image": "mcr.microsoft.com/devcontainers/base:ubuntu"
     }
     
     # Only include ports if explicitly provided
