@@ -229,7 +229,7 @@ class ConfigTest
     *
     * core/testOnly *ConfigTest -- -z "print the merged devcontainer content for manual inspection"
     */
-  "print the merged devcontainer content for manual inspection" in {
+  "print the merged devcontainer content for manual inspection" ignore {
     val projectConfigYaml =
       scala.io.Source.fromResource("projectConfig.yaml").mkString
     val userConfigYaml =

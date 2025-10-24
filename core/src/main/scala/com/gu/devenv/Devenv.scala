@@ -49,11 +49,11 @@ object Devenv {
               mergedUserConfig = Config.mergeConfigs(projectConfig, maybeUserConfig)
               userJson   <- Config.configAsJson(mergedUserConfig)
               sharedJson <- Config.configAsJson(projectConfig)
-              userDevcontainerStatus <- Filesystem.writeFile(
+              userDevcontainerStatus <- Filesystem.updateFile(
                 devEnvPaths.userDevcontainerFile,
                 userJson.spaces2
               )
-              sharedDevcontainerStatus <- Filesystem.writeFile(
+              sharedDevcontainerStatus <- Filesystem.updateFile(
                 devEnvPaths.sharedDevcontainerFile,
                 sharedJson.spaces2
               )
@@ -68,7 +68,7 @@ object Devenv {
   }
 
   private def resolveDevenvPaths(devcontainerDir: Path): DevEnvPaths = {
-    val userDir = devcontainerDir.resolve("user")
+    val userDir   = devcontainerDir.resolve("user")
     val sharedDir = devcontainerDir.resolve("shared")
     DevEnvPaths(
       devcontainerDir = devcontainerDir,

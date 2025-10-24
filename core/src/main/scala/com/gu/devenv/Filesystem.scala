@@ -21,17 +21,19 @@ object Filesystem {
     new String(bytes, java.nio.charset.StandardCharsets.UTF_8)
   }
 
-  def writeFile(path: Path, content: String): Try[FileSystemStatus] = Try {
-    if (!Files.exists(path)) {
-      Files.write(
-        path,
-        content.getBytes(java.nio.charset.StandardCharsets.UTF_8),
-        StandardOpenOption.CREATE_NEW
-      )
-      FileSystemStatus.Created
-    } else {
-      FileSystemStatus.AlreadyExists
-    }
+  /** Updates a file by overwriting its content, or creates it if it doesn't exist. Use this for
+    * files that should be regenerated on each run (e.g., devcontainer.json). Do NOT use this for
+    * init behavior where existing files should be preserved.
+    */
+  def updateFile(path: Path, content: String): Try[FileSystemStatus] = Try {
+    val exists = Files.exists(path)
+    Files.write(
+      path,
+      content.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+      StandardOpenOption.CREATE,
+      StandardOpenOption.TRUNCATE_EXISTING
+    )
+    if (exists) FileSystemStatus.AlreadyExists else FileSystemStatus.Created
   }
 
   def setupGitignore(gitignoreFile: Path): Try[GitignoreStatus] = Try {
@@ -54,7 +56,13 @@ object Filesystem {
       if (hasUserExclusion) {
         GitignoreStatus.AlreadyExistsWithExclusion
       } else {
-        GitignoreStatus.AlreadyExistsWithoutExclusion
+        // Append our comment and user/ entry to the existing file
+        Files.write(
+          gitignoreFile,
+          gitignoreContents.getBytes,
+          StandardOpenOption.APPEND
+        )
+        GitignoreStatus.Updated
       }
     }
   }
@@ -116,6 +124,6 @@ object Filesystem {
   enum GitignoreStatus {
     case Created
     case AlreadyExistsWithExclusion
-    case AlreadyExistsWithoutExclusion
+    case Updated
   }
 }
