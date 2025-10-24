@@ -62,7 +62,7 @@ object Config {
     }
 
   def configAsJson(projectConfig: ProjectConfig): Try[Json] =
-    // Apply modules to get the final configuration
+    // Start by applying requested modules, then put explicit configuration on top of that
     Modules.applyModules(projectConfig).map { config =>
       val customizations = JsonObject(
         "vscode" -> Json.obj(

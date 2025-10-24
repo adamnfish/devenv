@@ -22,3 +22,28 @@ Two devcontainer files are generated:
 - `.devcontainer/user/devcontainer.json` - Merged config with your personal settings
 - `.devcontainer/shared/devcontainer.json` - Project-only config for team use
 
+## Modules
+
+Modules are pre-configured bundles of features, plugins, and commands that can be enabled in your project config. They're included in the default `.devenv` template and can be disabled by commenting them out or removing them from the list.
+
+**Available modules:**
+
+- **`apt-updates`** - Applies apt security updates during container creation (Ubuntu/Debian only)
+- **`mise`** - Installs [mise](https://mise.jdx.dev/) for version management of languages and tools
+
+**Example configuration:**
+
+```yaml
+# In .devcontainer/.devenv
+modules:
+  - apt-updates
+  - mise
+```
+
+To disable a module, comment it out or remove it:
+
+```yaml
+modules:
+  - apt-updates
+  # - mise  (disabled)
+```

@@ -8,7 +8,6 @@ import cats.implicits._
   * contribute features, mounts, plugins, and commands to the final devcontainer.
   */
 object Modules {
-
   case class ModuleContribution(
       features: Map[String, Json] = Map.empty,
       mounts: List[Mount] = Nil,
@@ -20,32 +19,30 @@ object Modules {
     * precedence over module defaults. Returns a Failure if any unknown modules are specified.
     */
   def applyModules(config: ProjectConfig): Try[ProjectConfig] =
-    config.modules.traverse(getModuleContribution).map { contributions =>
-      val mergedContribution =
-        contributions.foldLeft(ModuleContribution()) { case (acc, contrib) =>
-          ModuleContribution(
-            features = acc.features ++ contrib.features,
-            mounts = acc.mounts ++ contrib.mounts,
-            plugins = Plugins(
-              intellij = acc.plugins.intellij ++ contrib.plugins.intellij,
-              vscode = acc.plugins.vscode ++ contrib.plugins.vscode
-            ),
-            postCreateCommands = acc.postCreateCommands ++ contrib.postCreateCommands
-          )
-        }
+    config.modules
+      .traverse(getModuleContribution) // lookup requested modules to check we support them
+      .map { moduleContributions =>
+        moduleContributions.foldRight(config)((contribution, cfg) =>
+          applyModuleContribution(cfg, contribution)
+        )
+      }
 
-      // Merge with explicit config - explicit config takes precedence
-      config.copy(
-        features = mergedContribution.features ++ config.features,
-        mounts = mergedContribution.mounts ++ config.mounts,
-        plugins = Plugins(
-          intellij = mergedContribution.plugins.intellij ++ config.plugins.intellij,
-          vscode = mergedContribution.plugins.vscode ++ config.plugins.vscode
-        ),
-        postCreateCommand = mergedContribution.postCreateCommands ++ config.postCreateCommand,
-        postStartCommand = config.postStartCommand
-      )
-    }
+  /** Apply a single module contribution to a project config. Module contributions are prepended to
+    * explicit config, so explicit config takes precedence.
+    */
+  private[devenv] def applyModuleContribution(
+      config: ProjectConfig,
+      contribution: ModuleContribution
+  ): ProjectConfig =
+    config.copy(
+      features = contribution.features ++ config.features,
+      mounts = contribution.mounts ++ config.mounts,
+      plugins = Plugins(
+        intellij = contribution.plugins.intellij ++ config.plugins.intellij,
+        vscode = contribution.plugins.vscode ++ config.plugins.vscode
+      ),
+      postCreateCommand = contribution.postCreateCommands ++ config.postCreateCommand
+    )
 
   private def getModuleContribution(
       moduleName: String
