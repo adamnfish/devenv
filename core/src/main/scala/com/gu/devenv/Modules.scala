@@ -1,11 +1,11 @@
 package com.gu.devenv
 
 import io.circe.Json
-import scala.util.{Try, Success, Failure}
+import scala.util.{Failure, Success, Try}
 import cats.implicits._
 
-/** Defines built-in modules that can be enabled/disabled in project configuration.
-  * Each module can contribute features, mounts, plugins, and commands to the final devcontainer.
+/** Defines built-in modules that can be enabled/disabled in project configuration. Each module can
+  * contribute features, mounts, plugins, and commands to the final devcontainer.
   */
 object Modules {
 
@@ -16,14 +16,13 @@ object Modules {
       postCreateCommands: List[Command] = Nil
   )
 
-  /** Apply modules to a project config, merging their contributions.
-    * Explicit config takes precedence over module defaults.
-    * Returns a Failure if any unknown modules are specified.
+  /** Apply modules to a project config, merging their contributions. Explicit config takes
+    * precedence over module defaults. Returns a Failure if any unknown modules are specified.
     */
-  def applyModules(config: ProjectConfig): Try[ProjectConfig] = {
+  def applyModules(config: ProjectConfig): Try[ProjectConfig] =
     config.modules.traverse(getModuleContribution).map { contributions =>
-      val mergedContribution = contributions.foldLeft(ModuleContribution()) {
-        case (acc, contrib) =>
+      val mergedContribution =
+        contributions.foldLeft(ModuleContribution()) { case (acc, contrib) =>
           ModuleContribution(
             features = acc.features ++ contrib.features,
             mounts = acc.mounts ++ contrib.mounts,
@@ -33,7 +32,7 @@ object Modules {
             ),
             postCreateCommands = acc.postCreateCommands ++ contrib.postCreateCommands
           )
-      }
+        }
 
       // Merge with explicit config - explicit config takes precedence
       config.copy(
@@ -47,23 +46,22 @@ object Modules {
         postStartCommand = config.postStartCommand
       )
     }
-  }
 
-  // ...existing code...
-
-  private def getModuleContribution(moduleName: String): Try[ModuleContribution] = {
+  private def getModuleContribution(
+      moduleName: String
+  ): Try[ModuleContribution] =
     moduleName match {
-      case "security-updates" => Success(securityUpdates)
-      case "mise"             => Success(mise)
-      case unknown => Failure(new IllegalArgumentException(
-        s"Unknown module: '$unknown'. Available modules: security-updates, mise"
-      ))
+      case "apt-updates" => Success(aptUpdates)
+      case "mise"        => Success(mise)
+      case unknown =>
+        Failure(
+          new IllegalArgumentException(
+            s"Unknown module: '$unknown'. Available modules: apt-updates, mise"
+          )
+        )
     }
-  }
 
-  // ...existing code...
-
-  private val securityUpdates = ModuleContribution(
+  private val aptUpdates = ModuleContribution(
     postCreateCommands = List(
       Command(
         cmd = "export DEBIAN_FRONTEND=noninteractive && " +
@@ -103,4 +101,3 @@ object Modules {
     )
   )
 }
-

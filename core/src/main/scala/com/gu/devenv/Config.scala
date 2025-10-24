@@ -14,14 +14,13 @@ import java.nio.file.Path
 object Config {
   implicit val config: Configuration = Configuration.default.withDefaults
 
-  def loadProjectConfig(path: Path): Try[ProjectConfig] = {
+  def loadProjectConfig(path: Path): Try[ProjectConfig] =
     for {
       configStr <- Filesystem.readFile(path)
-      config <- parseProjectConfig(configStr)
+      config    <- parseProjectConfig(configStr)
     } yield config
-  }
 
-  def loadUserConfig(path: Path): Try[Option[UserConfig]] = {
+  def loadUserConfig(path: Path): Try[Option[UserConfig]] =
     Filesystem
       .readFile(path)
       .flatMap(parseUserConfig)
@@ -30,24 +29,23 @@ object Config {
         // It's ok if the user config file doesn't exist
         None
       }
-  }
 
   def parseProjectConfig(contents: String): Try[ProjectConfig] =
     for {
-      json <- parser.parse(contents).toTry
+      json          <- parser.parse(contents).toTry
       projectConfig <- json.as[ProjectConfig].toTry
     } yield projectConfig
 
   def parseUserConfig(contents: String): Try[UserConfig] =
     for {
-      json <- parser.parse(contents).toTry
+      json       <- parser.parse(contents).toTry
       userConfig <- json.as[UserConfig].toTry
     } yield userConfig
 
   def mergeConfigs(
       projectConfig: ProjectConfig,
       maybeUserConfig: Option[UserConfig]
-  ): ProjectConfig = {
+  ): ProjectConfig =
     maybeUserConfig.fold(projectConfig) { userConfig =>
       // fetch the user's configured items so they can be added to the project config
       val mergedPlugins =
@@ -62,9 +60,8 @@ object Config {
         postStartCommand = projectConfig.postStartCommand
       )
     }
-  }
 
-  def configAsJson(projectConfig: ProjectConfig): Try[Json] = {
+  def configAsJson(projectConfig: ProjectConfig): Try[Json] =
     // Apply modules to get the final configuration
     Modules.applyModules(projectConfig).map { config =>
       val customizations = JsonObject(
@@ -79,17 +76,17 @@ object Config {
       val commands = JsonObject.fromIterable(
         List(
           "postCreateCommand" -> combineCommands(config.postCreateCommand),
-          "postStartCommand" -> combineCommands(config.postStartCommand)
+          "postStartCommand"  -> combineCommands(config.postStartCommand)
         ).collect { case (key, Some(value)) =>
           key -> Json.fromString(value)
         }
       )
 
       val baseConfig = JsonObject(
-        "name" -> config.name.asJson,
-        "image" -> config.image.asJson,
+        "name"           -> config.name.asJson,
+        "image"          -> config.image.asJson,
         "customizations" -> customizations.asJson,
-        "forwardPorts" -> config.forwardPorts.asJson
+        "forwardPorts"   -> config.forwardPorts.asJson
       )
 
       // Add optional fields if they exist
@@ -103,9 +100,8 @@ object Config {
 
       commands.deepMerge(withMounts).asJson
     }
-  }
 
-  private def combineCommands(commands: List[Command]): Option[String] = {
+  private def combineCommands(commands: List[Command]): Option[String] =
     if (commands.isEmpty) None
     else
       Some(
@@ -113,17 +109,15 @@ object Config {
           .map(command => s"(cd ${command.workingDirectory} && ${command.cmd})")
           .mkString(" && ")
       )
-  }
 
   private def applyPlugins(
       projectPlugins: Plugins,
       userPlugins: Plugins
-  ): Plugins = {
+  ): Plugins =
     Plugins(
       intellij = (projectPlugins.intellij ++ userPlugins.intellij).distinct,
       vscode = (projectPlugins.vscode ++ userPlugins.vscode).distinct
     )
-  }
 
   private def applyDotfiles(dotfiles: Dotfiles): List[Command] = {
     val cloneCommand = Command(

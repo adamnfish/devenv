@@ -13,10 +13,10 @@ object Devenv {
       devcontainerStatus <- Filesystem.createDirIfNotExists(
         paths.devcontainerDir
       )
-      userStatus <- Filesystem.createDirIfNotExists(paths.userDir)
-      sharedStatus <- Filesystem.createDirIfNotExists(paths.sharedDir)
+      userStatus      <- Filesystem.createDirIfNotExists(paths.userDir)
+      sharedStatus    <- Filesystem.createDirIfNotExists(paths.sharedDir)
       gitignoreStatus <- Filesystem.setupGitignore(paths.gitignoreFile)
-      devenvStatus <- Filesystem.setupDevenv(paths.devenvFile)
+      devenvStatus    <- Filesystem.setupDevenv(paths.devenvFile)
     } yield InitResult(
       devcontainerStatus,
       userStatus,
@@ -31,7 +31,7 @@ object Devenv {
       userConfigPath: Path
   ): Try[GenerateResult] = {
     val devEnvPaths = resolveDevenvPaths(devcontainerDir)
-    val userPaths = resolveUserConfigPaths(userConfigPath)
+    val userPaths   = resolveUserConfigPaths(userConfigPath)
 
     // Check if project has been initialized with a devenv configuration file
     if (!java.nio.file.Files.exists(devEnvPaths.devenvFile)) {
@@ -47,7 +47,7 @@ object Devenv {
             for {
               maybeUserConfig <- Config.loadUserConfig(userPaths.devenvConf)
               mergedUserConfig = Config.mergeConfigs(projectConfig, maybeUserConfig)
-              userJson <- Config.configAsJson(mergedUserConfig)
+              userJson   <- Config.configAsJson(mergedUserConfig)
               sharedJson <- Config.configAsJson(projectConfig)
               userDevcontainerStatus <- Filesystem.writeFile(
                 devEnvPaths.userDevcontainerFile,
@@ -68,7 +68,7 @@ object Devenv {
   }
 
   private def resolveDevenvPaths(devcontainerDir: Path): DevEnvPaths = {
-    val userDir = devcontainerDir.resolve("user")
+    val userDir   = devcontainerDir.resolve("user")
     val sharedDir = devcontainerDir.resolve("shared")
     DevEnvPaths(
       devcontainerDir = devcontainerDir,
@@ -81,11 +81,10 @@ object Devenv {
     )
   }
 
-  private def resolveUserConfigPaths(root: Path): UserConfigPaths = {
+  private def resolveUserConfigPaths(root: Path): UserConfigPaths =
     UserConfigPaths(
       devenvConf = root.resolve("devenv.conf")
     )
-  }
 
   private case class DevEnvPaths(
       devcontainerDir: Path,
@@ -115,7 +114,7 @@ object Devenv {
         userDevcontainerStatus: FileSystemStatus,
         sharedDevcontainerStatus: FileSystemStatus
     ) extends GenerateResult
-    case object NotInitialized extends GenerateResult
+    case object NotInitialized      extends GenerateResult
     case object ConfigNotCustomized extends GenerateResult
   }
 }

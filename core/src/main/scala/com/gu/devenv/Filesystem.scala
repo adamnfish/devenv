@@ -84,12 +84,12 @@ object Filesystem {
        |# REQUIRED: Change this to your project name
        |name: "CHANGE_ME"
        |
-       |# Modules: Built-in functionality (enabled by default)
-       |# - security-updates: Apply apt security updates during container creation
+       |# Modules: Built-in functionality
+       |# - apt-updates: Apply apt security updates during container creation
        |# - mise: Install mise for version management (https://mise.jdx.dev/)
        |# To disable, comment out or remove items from this list
        |modules:
-       |  - security-updates
+       |  - apt-updates
        |  - mise
        |
        |# Optional: Container image to use (defaults to latest ubuntu LTS)

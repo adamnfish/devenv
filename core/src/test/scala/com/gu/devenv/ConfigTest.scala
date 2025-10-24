@@ -154,18 +154,22 @@ class ConfigTest
     extensions should contain allOf ("scalameta.metals", "scala-lang.scala", "hverlin.mise-vscode")
 
     val plugins = (json \\ "plugins").head.asArray.value.flatMap(_.asString)
-    plugins should contain allOf ("org.intellij.scala", "com.github.gtache.lsp", "com.github.l34130.mise")
+    plugins should contain allOf (
+      "org.intellij.scala",
+      "com.github.gtache.lsp",
+      "com.github.l34130.mise"
+    )
 
     // Should have mise feature from the module
     val features = (json \\ "features").head.asObject.value
-    features.keys should contain ("ghcr.io/devcontainers-extra/features/mise:1")
-    features.keys should contain ("ghcr.io/devcontainers/features/docker-in-docker:1")
+    features.keys should contain("ghcr.io/devcontainers-extra/features/mise:1")
+    features.keys should contain("ghcr.io/devcontainers/features/docker-in-docker:1")
 
     // Should have mise mount from the module
     val mounts = (json \\ "mounts").head.asArray.value
     mounts.length should be >= 3
     val mountSources = mounts.flatMap(_.asObject).flatMap(_.apply("source")).flatMap(_.asString)
-    mountSources should contain ("docker-mise-data-volume")
+    mountSources should contain("docker-mise-data-volume")
 
     val postCreateCommand = (json \\ "postCreateCommand").head.asString.value
     postCreateCommand should include("sbt update")
@@ -188,7 +192,7 @@ class ConfigTest
     val Success(userConfig) =
       Config.parseUserConfig(userConfigYaml).success
 
-    val merged = Config.mergeConfigs(projectConfig, Some(userConfig))
+    val merged        = Config.mergeConfigs(projectConfig, Some(userConfig))
     val Success(json) = Config.configAsJson(merged).success
 
     // Assert against JSON structure
@@ -208,7 +212,11 @@ class ConfigTest
     extensions should contain allOf ("scalameta.metals", "scala-lang.scala", "GitHub.copilot")
 
     val plugins = (json \\ "plugins").head.asArray.value.flatMap(_.asString)
-    plugins should contain allOf ("org.intellij.scala", "com.github.gtache.lsp", "com.github.copilot")
+    plugins should contain allOf (
+      "org.intellij.scala",
+      "com.github.gtache.lsp",
+      "com.github.copilot"
+    )
 
     (json \\ "postCreateCommand").head.asString.value should include(
       "git clone https://github.com/example/dotfiles.git"
@@ -219,8 +227,7 @@ class ConfigTest
     *
     * To see the output, change `ignore` to `in` and run this test with:
     *
-    * core/testOnly *ConfigTest -- -z "print the merged devcontainer content for
-    * manual inspection"
+    * core/testOnly *ConfigTest -- -z "print the merged devcontainer content for manual inspection"
     */
   "print the merged devcontainer content for manual inspection" in {
     val projectConfigYaml =
@@ -233,7 +240,7 @@ class ConfigTest
     val Success(userConfig) =
       Config.parseUserConfig(userConfigYaml).success
 
-    val merged = Config.mergeConfigs(projectConfig, Some(userConfig))
+    val merged        = Config.mergeConfigs(projectConfig, Some(userConfig))
     val Success(json) = Config.configAsJson(merged).success
 
     println(json.spaces2)

@@ -9,8 +9,7 @@ object Output {
   /** Formatting conventions:
     *   - Filenames/paths: Cyan
     *   - Commands: Bold Cyan
-    *   - Status: Green (success), Light Gray (neutral), Red (error), Yellow
-    *     (warning)
+    *   - Status: Green (success), Light Gray (neutral), Red (error), Yellow (warning)
     *   - Code snippets: Bold Green
     *   - Section headings: Bold White
     *   - Warning/Error headings: Bold Yellow / Bold Red
@@ -20,17 +19,17 @@ object Output {
   // Public API
 
   def initResultMessage(result: InitResult): String = {
-    val table = buildInitTable(result)
-    val warning = buildGitignoreWarning(result.gitignoreStatus)
+    val table     = buildInitTable(result)
+    val warning   = buildGitignoreWarning(result.gitignoreStatus)
     val nextSteps = buildInitNextSteps(result.gitignoreStatus)
 
     List(Some(table), warning, Some(nextSteps)).flatten.mkString
   }
 
-  def generateResultMessage(result: GenerateResult): String = {
+  def generateResultMessage(result: GenerateResult): String =
     result match {
       case GenerateResult.Success(userStatus, sharedStatus) =>
-        val table = buildGenerateTable(userStatus, sharedStatus)
+        val table     = buildGenerateTable(userStatus, sharedStatus)
         val nextSteps = buildGenerateNextSteps()
         table + nextSteps
 
@@ -40,7 +39,6 @@ object Output {
       case GenerateResult.ConfigNotCustomized =>
         buildConfigNotCustomizedMessage()
     }
-  }
 
   // Init message builders (called by initResultMessage)
 
@@ -58,7 +56,7 @@ object Output {
     buildTable("Initialization Summary:", rows, 32)
   }
 
-  private def buildGitignoreWarning(status: GitignoreStatus): Option[String] = {
+  private def buildGitignoreWarning(status: GitignoreStatus): Option[String] =
     status match {
       case GitignoreStatus.AlreadyExistsWithoutExclusion =>
         Some(
@@ -76,9 +74,8 @@ object Output {
         )
       case _ => None
     }
-  }
 
-  private def buildInitNextSteps(status: GitignoreStatus): String = {
+  private def buildInitNextSteps(status: GitignoreStatus): String =
     status match {
       case GitignoreStatus.AlreadyExistsWithoutExclusion => ""
       case _ =>
@@ -86,7 +83,6 @@ object Output {
           s"  1. Edit ${Color.Cyan(".devcontainer/.devenv")} to configure your project\n" +
           s"  2. Run ${Bold.On(Color.Cyan("devenv generate"))} to create devcontainer files"
     }
-  }
 
   // Generate message builders (called by generateResultMessage)
 
@@ -109,7 +105,7 @@ object Output {
   }
 
   private def buildNotInitializedMessage(): String = {
-    val header = Bold.On(Color.Red("Project not initialized"))
+    val header  = Bold.On(Color.Red("Project not initialized"))
     val divider = Color.Red("━" * 60)
     val message =
       s"\n${Color.Yellow("The .devcontainer directory has not been initialized.")}\n\n" +
@@ -122,7 +118,7 @@ object Output {
   }
 
   private def buildConfigNotCustomizedMessage(): String = {
-    val header = Bold.On(Color.Yellow("Configuration not customized"))
+    val header  = Bold.On(Color.Yellow("Configuration not customized"))
     val divider = Color.Yellow("━" * 60)
     val message =
       s"\n${Color.Yellow("The .devenv configuration file still contains the placeholder project name.")}\n\n" +
@@ -135,11 +131,10 @@ object Output {
     s"$header\n$divider$message"
   }
 
-  private def buildGenerateNextSteps(): String = {
+  private def buildGenerateNextSteps(): String =
     "\n\n" + Bold.On("You can now:") + "\n" +
       s"  • Open the project in your IDE and reopen in container\n" +
       s"  • Use the shared config for cloud-based development"
-  }
 
   // Shared table builder (called by buildInitTable and buildGenerateTable)
 
@@ -148,7 +143,7 @@ object Output {
       rows: List[(String, (String, String, Str => Str))],
       pathPadding: Int
   ): String = {
-    val header = Bold.On(title)
+    val header  = Bold.On(title)
     val divider = Color.LightBlue("━" * 60)
 
     val tableRows = rows

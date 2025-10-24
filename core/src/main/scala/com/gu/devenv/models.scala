@@ -63,8 +63,8 @@ object Mount {
       case Right(shortMount) => Right(shortMount)
       case Left(_) =>
         for {
-          source <- c.downField("source").as[String]
-          target <- c.downField("target").as[String]
+          source    <- c.downField("source").as[String]
+          target    <- c.downField("target").as[String]
           mountType <- c.downField("type").as[String]
         } yield ExplicitMount(source, target, mountType)
     }
@@ -76,7 +76,7 @@ object Mount {
       Json.obj(
         "source" -> Json.fromString(source),
         "target" -> Json.fromString(target),
-        "type" -> Json.fromString(mountType)
+        "type"   -> Json.fromString(mountType)
       )
   }
 }
