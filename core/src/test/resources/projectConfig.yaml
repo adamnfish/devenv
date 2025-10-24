@@ -1,0 +1,43 @@
+name: "Scala SBT Development Container"
+image: "mcr.microsoft.com/devcontainers/base:ubuntu"
+forwardPorts:
+  - containerPort: 8080
+    hostPort: 8080
+  - containerPort: 9000
+    hostPort: 9000
+remoteEnv:
+  - name: "SBT_OPTS"
+    value: "-Xmx2G -XX:+UseG1GC"
+  - name: "JAVA_HOME"
+    value: "/usr/lib/jvm/java-17-openjdk-amd64"
+containerEnv:
+  - name: "EXAMPLE"
+    value: "foo"
+  - name: "EXAMPLE+2"
+    value: "bar"
+plugins:
+  intellij:
+    - "org.intellij.scala"
+    - "com.github.gtache.lsp"
+  vscode:
+    - "scalameta.metals"
+    - "scala-lang.scala"
+mounts:
+  - source: "${localWorkspaceFolder}/.ivy2"
+    target: "/home/vscode/.ivy2"
+    type: "volume"
+  - source: "${localWorkspaceFolder}/.sbt"
+    target: "/home/vscode/.sbt"
+    type: "volume"
+postCreateCommand:
+  - cmd: "sbt update"
+    workingDirectory: "/workspaces/project/subdir"
+  - cmd: "sbt compile"
+    workingDirectory: "subdir"
+postStartCommand:
+  - cmd: "echo 'Container started successfully'"
+    workingDirectory: "."
+features:
+  "ghcr.io/devcontainers/features/docker-in-docker:1": {}
+remoteUser: "vscode"
+updateRemoteUserUID: true

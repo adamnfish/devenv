@@ -1,0 +1,10 @@
+plugins:
+  intellij:
+    - "com.github.copilot"
+    - "com.github.gtache.lsp"
+  vscode:
+    - "GitHub.copilot"
+dotfiles:
+  repository: "https://github.com/example/dotfiles.git"
+  targetPath: "~"
+  installCommand: "install.sh"
