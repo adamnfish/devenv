@@ -1,12 +1,24 @@
 package com.gu.devenv
 
 import com.gu.devenv.Devenv.{GenerateResult, InitResult}
-import com.gu.devenv.Filesystem.GitignoreStatus
+import com.gu.devenv.Filesystem.{FileSystemStatus, GitignoreStatus}
 import fansi._
 
 object Output {
 
+  /** Formatting conventions:
+    *   - Filenames/paths: Cyan
+    *   - Commands: Bold Cyan
+    *   - Status: Green (success), Light Gray (neutral), Red (error), Yellow
+    *     (warning)
+    *   - Code snippets: Bold Green
+    *   - Section headings: Bold White
+    *   - Warning/Error headings: Bold Yellow / Bold Red
+    *   - Dividers: Light Blue
+    */
+
   // Public API
+
   def initResultMessage(result: InitResult): String = {
     val table = buildInitTable(result)
     val warning = buildGitignoreWarning(result.gitignoreStatus)
@@ -16,13 +28,22 @@ object Output {
   }
 
   def generateResultMessage(result: GenerateResult): String = {
-    val table = buildGenerateTable(result)
-    val nextSteps = buildGenerateNextSteps()
+    result match {
+      case GenerateResult.Success(userStatus, sharedStatus) =>
+        val table = buildGenerateTable(userStatus, sharedStatus)
+        val nextSteps = buildGenerateNextSteps()
+        table + nextSteps
 
-    table + nextSteps
+      case GenerateResult.NotInitialized =>
+        buildNotInitializedMessage()
+
+      case GenerateResult.ConfigNotCustomized =>
+        buildConfigNotCustomizedMessage()
+    }
   }
 
   // Init message builders (called by initResultMessage)
+
   private def buildInitTable(result: InitResult): String = {
     val rows = List(
       (".devcontainer/", formatInitStatus(result.devcontainerStatus)),
@@ -49,8 +70,8 @@ object Output {
                 "This means your user-specific settings could be\n" +
                 "committed to the repository.\n\n"
             ) +
-            "Please add the following line to .devcontainer/.gitignore:\n" +
-            s"  ${Color.Green("user/")}\n" +
+            s"Please add the following line to ${Color.Cyan(".devcontainer/.gitignore")}:\n" +
+            s"  ${Bold.On(Color.Green("user/"))}\n" +
             Color.Yellow("━" * 60)
         )
       case _ => None
@@ -62,34 +83,66 @@ object Output {
       case GitignoreStatus.AlreadyExistsWithoutExclusion => ""
       case _ =>
         "\n\n" + Bold.On("Next steps:") + "\n" +
-          s"  ${Color.Green("1.")} Edit `.devcontainer/.devenv` to configure your project\n" +
-          s"  ${Color.Green("2.")} Run 'devenv generate' to create devcontainer files"
+          s"  1. Edit ${Color.Cyan(".devcontainer/.devenv")} to configure your project\n" +
+          s"  2. Run ${Bold.On(Color.Cyan("devenv generate"))} to create devcontainer files"
     }
   }
 
   // Generate message builders (called by generateResultMessage)
-  private def buildGenerateTable(result: GenerateResult): String = {
+
+  private def buildGenerateTable(
+      userDevcontainerStatus: FileSystemStatus,
+      sharedDevcontainerStatus: FileSystemStatus
+  ): String = {
     val rows = List(
       (
         ".devcontainer/user/devcontainer.json",
-        formatGenerateStatus(result.userDevcontainerStatus)
+        formatGenerateStatus(userDevcontainerStatus)
       ),
       (
         ".devcontainer/shared/devcontainer.json",
-        formatGenerateStatus(result.sharedDevcontainerStatus)
+        formatGenerateStatus(sharedDevcontainerStatus)
       )
     )
 
     buildTable("Generation Summary:", rows, 47)
   }
 
+  private def buildNotInitializedMessage(): String = {
+    val header = Bold.On(Color.Red("Project not initialized"))
+    val divider = Color.Red("━" * 60)
+    val message =
+      s"\n${Color.Yellow("The .devcontainer directory has not been initialized.")}\n\n" +
+        "Please complete these steps:\n" +
+        s"  1. Run ${Bold.On(Color.Cyan("devenv init"))} to set up the project structure\n" +
+        s"  2. Edit ${Color.Cyan(".devcontainer/.devenv")} to configure your project\n" +
+        s"  3. Run ${Bold.On(Color.Cyan("devenv generate"))} again to create devcontainer files"
+
+    s"$header\n$divider$message"
+  }
+
+  private def buildConfigNotCustomizedMessage(): String = {
+    val header = Bold.On(Color.Yellow("Configuration not customized"))
+    val divider = Color.Yellow("━" * 60)
+    val message =
+      s"\n${Color.Yellow("The .devenv configuration file still contains the placeholder project name.")}\n\n" +
+        s"Please edit ${Color.Cyan(".devcontainer/.devenv")} and change:\n" +
+        s"  ${Bold.On(Color.Red("name: \"CHANGE_ME\""))}\n" +
+        "to:\n" +
+        s"  ${Bold.On(Color.Green("name: \"Your Project Name\""))}\n\n" +
+        s"Then run ${Bold.On(Color.Cyan("devenv generate"))} again."
+
+    s"$header\n$divider$message"
+  }
+
   private def buildGenerateNextSteps(): String = {
     "\n\n" + Bold.On("You can now:") + "\n" +
-      s"  ${Color.Green("•")} Open the project in your IDE and reopen in container\n" +
-      s"  ${Color.Green("•")} Use the shared config for cloud-based development"
+      s"  • Open the project in your IDE and reopen in container\n" +
+      s"  • Use the shared config for cloud-based development"
   }
 
   // Shared table builder (called by buildInitTable and buildGenerateTable)
+
   private def buildTable(
       title: String,
       rows: List[(String, (String, String, Str => Str))],
@@ -109,6 +162,7 @@ object Output {
   }
 
   // Status formatters (low-level helpers called by table builders)
+
   private def formatInitStatus(
       status: Filesystem.FileSystemStatus
   ): (String, String, Str => Str) = {

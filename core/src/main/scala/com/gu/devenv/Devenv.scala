@@ -1,9 +1,9 @@
 package com.gu.devenv
 
-import com.gu.devenv.Filesystem.{FileSystemStatus, GitignoreStatus}
+import com.gu.devenv.Filesystem.{FileSystemStatus, GitignoreStatus, PLACEHOLDER_PROJECT_NAME}
 
 import java.nio.file.Path
-import scala.util.Try
+import scala.util.{Success, Try}
 
 object Devenv {
   def init(devcontainerDir: Path): Try[InitResult] = {
@@ -33,25 +33,38 @@ object Devenv {
     val devEnvPaths = resolveDevenvPaths(devcontainerDir)
     val userPaths = resolveUserConfigPaths(userConfigPath)
 
-    for {
-      projectConfig <- Config.loadProjectConfig(devEnvPaths.devenvFile)
-      maybeUserConfig <-
-        Config.loadUserConfig(userPaths.devenvConf)
-      mergedUserConfig = Config.mergeConfigs(projectConfig, maybeUserConfig)
-      userJson = Config.configAsJson(mergedUserConfig)
-      sharedJson = Config.configAsJson(projectConfig)
-      userDevcontainerStatus <- Filesystem.writeFile(
-        devEnvPaths.userDevcontainerFile,
-        userJson.spaces2
-      )
-      sharedDevcontainerStatus <- Filesystem.writeFile(
-        devEnvPaths.sharedDevcontainerFile,
-        sharedJson.spaces2
-      )
-    } yield GenerateResult(
-      userDevcontainerStatus,
-      sharedDevcontainerStatus
-    )
+    // Check if project has been initialized with a devenv configuration file
+    if (!java.nio.file.Files.exists(devEnvPaths.devenvFile)) {
+      Success(GenerateResult.NotInitialized)
+    } else {
+      for {
+        projectConfig <- Config.loadProjectConfig(devEnvPaths.devenvFile)
+        result <- {
+          // Check if the config has been customized
+          if (projectConfig.name == PLACEHOLDER_PROJECT_NAME) {
+            Success(GenerateResult.ConfigNotCustomized)
+          } else {
+            for {
+              maybeUserConfig <- Config.loadUserConfig(userPaths.devenvConf)
+              mergedUserConfig = Config.mergeConfigs(projectConfig, maybeUserConfig)
+              userJson = Config.configAsJson(mergedUserConfig)
+              sharedJson = Config.configAsJson(projectConfig)
+              userDevcontainerStatus <- Filesystem.writeFile(
+                devEnvPaths.userDevcontainerFile,
+                userJson.spaces2
+              )
+              sharedDevcontainerStatus <- Filesystem.writeFile(
+                devEnvPaths.sharedDevcontainerFile,
+                sharedJson.spaces2
+              )
+            } yield GenerateResult.Success(
+              userDevcontainerStatus,
+              sharedDevcontainerStatus
+            )
+          }
+        }
+      } yield result
+    }
   }
 
   private def resolveDevenvPaths(devcontainerDir: Path): DevEnvPaths = {
@@ -96,8 +109,13 @@ object Devenv {
       devenvStatus: FileSystemStatus
   )
 
-  case class GenerateResult(
-      userDevcontainerStatus: FileSystemStatus,
-      sharedDevcontainerStatus: FileSystemStatus
-  )
+  sealed trait GenerateResult
+  object GenerateResult {
+    case class Success(
+        userDevcontainerStatus: FileSystemStatus,
+        sharedDevcontainerStatus: FileSystemStatus
+    ) extends GenerateResult
+    case object NotInitialized extends GenerateResult
+    case object ConfigNotCustomized extends GenerateResult
+  }
 }

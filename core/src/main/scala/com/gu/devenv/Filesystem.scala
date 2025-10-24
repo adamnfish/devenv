@@ -5,6 +5,8 @@ import scala.jdk.CollectionConverters.given
 import scala.util.Try
 
 object Filesystem {
+  val PLACEHOLDER_PROJECT_NAME = "CHANGE_ME"
+
   def createDirIfNotExists(dir: Path): Try[FileSystemStatus] = Try {
     if (!Files.exists(dir)) {
       Files.createDirectory(dir)
@@ -18,7 +20,7 @@ object Filesystem {
     val bytes = Files.readAllBytes(path)
     new String(bytes, java.nio.charset.StandardCharsets.UTF_8)
   }
-  
+
   def writeFile(path: Path, content: String): Try[FileSystemStatus] = Try {
     if (!Files.exists(path)) {
       Files.write(
@@ -77,7 +79,25 @@ object Filesystem {
 
   private val devenvContents =
     """|# Devenv project configuration
-       |# Add your project-specific devcontainer settings here
+       |# Edit this file to configure your project's devcontainer
+       |
+       |# REQUIRED: Change this to your project name
+       |name: "CHANGE_ME"
+       |
+       |# Optional: Container image to use (defaults to latest ubuntu LTS)
+       |# image: "mcr.microsoft.com/devcontainers/base:ubuntu"
+       |
+       |# Optional: Ports to forward
+       |# forwardPorts: []
+       |
+       |# Optional: IDE plugins
+       |# plugins:
+       |#   vscode: []
+       |#   intellij: []
+       |
+       |# Optional: Commands to run after container creation
+       |# postCreateCommand: []
+       |# postStartCommand: []
        |""".stripMargin
 
   enum FileSystemStatus {
