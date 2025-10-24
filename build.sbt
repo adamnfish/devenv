@@ -1,5 +1,17 @@
 ThisBuild / scalaVersion := "3.3.6" // latest LTS
 ThisBuild / organization := "com.gu"
+ThisBuild / scalacOptions ++= Seq(
+  "-encoding",
+  "utf8",
+  "-feature",
+  "-unchecked",
+  "-deprecation",
+  "-Wunused:all",
+  "-Wvalue-discard",
+  "-Xfatal-warnings"
+)
+ThisBuild / Test / parallelExecution := true
+ThisBuild / Test / testOptions += Tests.Argument("-oD") // Show test durations
 
 val circeVersion = "0.14.15"
 
