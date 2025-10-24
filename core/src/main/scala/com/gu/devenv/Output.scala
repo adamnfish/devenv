@@ -51,7 +51,7 @@ object Output {
         ".devcontainer/.gitignore",
         formatGitignoreStatus(result.gitignoreStatus)
       ),
-      (".devcontainer/.devenv", formatInitStatus(result.devenvStatus))
+      (".devcontainer/devenv.yaml", formatInitStatus(result.devenvStatus))
     )
     buildTable("Initialization Summary:", rows, 32)
   }
@@ -75,15 +75,15 @@ object Output {
       case _ => None
     }
 
-  private def buildInitNextSteps(status: GitignoreStatus): String =
+  private def buildInitNextSteps(status: GitignoreStatus): String = {
     status match {
       case GitignoreStatus.AlreadyExistsWithoutExclusion => ""
       case _ =>
         "\n\n" + Bold.On("Next steps:") + "\n" +
-          s"  1. Edit ${Color.Cyan(".devcontainer/.devenv")} to configure your project\n" +
+          s"  1. Edit ${Color.Cyan(".devcontainer/devenv.yaml")} to configure your project\n" +
           s"  2. Run ${Bold.On(Color.Cyan("devenv generate"))} to create devcontainer files"
     }
-
+  }
   // Generate message builders (called by generateResultMessage)
 
   private def buildGenerateTable(
@@ -105,28 +105,27 @@ object Output {
   }
 
   private def buildNotInitializedMessage(): String = {
-    val header  = Bold.On(Color.Red("Project not initialized"))
+    val header = Bold.On(Color.Red("Project not initialized"))
     val divider = Color.Red("━" * 60)
     val message =
       s"\n${Color.Yellow("The .devcontainer directory has not been initialized.")}\n\n" +
-        "Please complete these steps:\n" +
-        s"  1. Run ${Bold.On(Color.Cyan("devenv init"))} to set up the project structure\n" +
-        s"  2. Edit ${Color.Cyan(".devcontainer/.devenv")} to configure your project\n" +
-        s"  3. Run ${Bold.On(Color.Cyan("devenv generate"))} again to create devcontainer files"
+      "Please complete these steps:\n" +
+      s"  1. Run ${Bold.On(Color.Cyan("devenv init"))} to set up the project structure\n" +
+      s"  2. Edit ${Color.Cyan(".devcontainer/devenv.yaml")} to configure your project\n" +
+      s"  3. Run ${Bold.On(Color.Cyan("devenv generate"))} again to create devcontainer files"
 
     s"$header\n$divider$message"
   }
 
   private def buildConfigNotCustomizedMessage(): String = {
-    val header  = Bold.On(Color.Yellow("Configuration not customized"))
+    val header = Bold.On(Color.Yellow("Configuration not customized"))
     val divider = Color.Yellow("━" * 60)
     val message =
-      s"\n${Color.Yellow("The .devenv configuration file still contains the placeholder project name.")}\n\n" +
-        s"Please edit ${Color.Cyan(".devcontainer/.devenv")} and change:\n" +
-        s"  ${Bold.On(Color.Red("name: \"CHANGE_ME\""))}\n" +
-        "to:\n" +
-        s"  ${Bold.On(Color.Green("name: \"Your Project Name\""))}\n\n" +
-        s"Then run ${Bold.On(Color.Cyan("devenv generate"))} again."
+      s"\n${Color.Yellow("The devenv.yaml configuration file still contains the placeholder project name.")}\n\n" +
+      s"Please edit ${Color.Cyan(".devcontainer/devenv.yaml")}:\n" +
+      s"  1. Change ${Bold.On(Color.Red("name: \"CHANGE_ME\""))} to ${Bold.On(Color.Green("name: \"Your Project Name\""))}\n" +
+      s"  2. Review and customize other settings (modules, plugins, ports, etc.)\n\n" +
+      s"Then run ${Bold.On(Color.Cyan("devenv generate"))} again."
 
     s"$header\n$divider$message"
   }

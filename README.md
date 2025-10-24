@@ -14,9 +14,9 @@ devenv generate
 
 ## Configuration
 
-**Project config**: `.devcontainer/.devenv` - Project-specific settings (image, ports, plugins, commands). Checked into version control.
+**Project config**: `.devcontainer/devenv.yaml` - Project-specific settings (image, ports, plugins, commands). Checked into version control.
 
-**User config**: `~/.config/devenv/devenv.conf` - Personal preferences (dotfiles, additional plugins). Merged with project config for the user-specific devcontainer.
+**User config**: `~/.config/devenv/devenv.yaml` - Personal preferences (dotfiles, additional plugins). Merged with project config for the user-specific devcontainer.
 
 Two devcontainer files are generated:
 - `.devcontainer/user/devcontainer.json` - Merged config with your personal settings
@@ -34,7 +34,7 @@ Modules are pre-configured bundles of features, plugins, and commands that can b
 **Example configuration:**
 
 ```yaml
-# In .devcontainer/.devenv
+# In .devcontainer/devenv.yaml
 modules:
   - apt-updates
   - mise

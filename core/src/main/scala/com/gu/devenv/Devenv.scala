@@ -68,7 +68,7 @@ object Devenv {
   }
 
   private def resolveDevenvPaths(devcontainerDir: Path): DevEnvPaths = {
-    val userDir   = devcontainerDir.resolve("user")
+    val userDir = devcontainerDir.resolve("user")
     val sharedDir = devcontainerDir.resolve("shared")
     DevEnvPaths(
       devcontainerDir = devcontainerDir,
@@ -77,13 +77,13 @@ object Devenv {
       sharedDir = sharedDir,
       sharedDevcontainerFile = sharedDir.resolve("devcontainer.json"),
       gitignoreFile = devcontainerDir.resolve(".gitignore"),
-      devenvFile = devcontainerDir.resolve("devenv.conf")
+      devenvFile = devcontainerDir.resolve("devenv.yaml")
     )
   }
 
   private def resolveUserConfigPaths(root: Path): UserConfigPaths =
     UserConfigPaths(
-      devenvConf = root.resolve("devenv.conf")
+      devenvConf = root.resolve("devenv.yaml")
     )
 
   private case class DevEnvPaths(
