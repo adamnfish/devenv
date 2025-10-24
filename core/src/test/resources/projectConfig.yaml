@@ -1,5 +1,7 @@
 name: "Scala SBT Development Container"
 image: "mcr.microsoft.com/devcontainers/base:ubuntu"
+modules:
+  - mise
 forwardPorts:
   - containerPort: 8080
     hostPort: 8080

@@ -134,7 +134,7 @@ class ConfigTest
     val Success(projectConfig) =
       Config.parseProjectConfig(projectConfigYaml).success
 
-    val json = Config.configAsJson(projectConfig)
+    val Success(json) = Config.configAsJson(projectConfig).success
 
     // Assert against JSON structure
     (json \\ "name").head.asString should contain(
@@ -151,13 +151,27 @@ class ConfigTest
 
     val extensions =
       (json \\ "extensions").head.asArray.value.flatMap(_.asString)
-    extensions should contain inOrderOnly ("scalameta.metals", "scala-lang.scala")
+    extensions should contain allOf ("scalameta.metals", "scala-lang.scala", "hverlin.mise-vscode")
 
     val plugins = (json \\ "plugins").head.asArray.value.flatMap(_.asString)
-    plugins should contain inOrderOnly ("org.intellij.scala", "com.github.gtache.lsp")
+    plugins should contain allOf ("org.intellij.scala", "com.github.gtache.lsp", "com.github.l34130.mise")
 
-    (json \\ "postCreateCommand").head.asString.value shouldBe
-      "(cd /workspaces/project/subdir && sbt update) && (cd subdir && sbt compile)"
+    // Should have mise feature from the module
+    val features = (json \\ "features").head.asObject.value
+    features.keys should contain ("ghcr.io/devcontainers-extra/features/mise:1")
+    features.keys should contain ("ghcr.io/devcontainers/features/docker-in-docker:1")
+
+    // Should have mise mount from the module
+    val mounts = (json \\ "mounts").head.asArray.value
+    mounts.length should be >= 3
+    val mountSources = mounts.flatMap(_.asObject).flatMap(_.apply("source")).flatMap(_.asString)
+    mountSources should contain ("docker-mise-data-volume")
+
+    val postCreateCommand = (json \\ "postCreateCommand").head.asString.value
+    postCreateCommand should include("sbt update")
+    postCreateCommand should include("sbt compile")
+    postCreateCommand should include("mise install")
+    postCreateCommand should include("mise activate")
 
     (json \\ "postStartCommand").head.asString.value shouldBe
       "(cd . && echo 'Container started successfully')"
@@ -175,7 +189,7 @@ class ConfigTest
       Config.parseUserConfig(userConfigYaml).success
 
     val merged = Config.mergeConfigs(projectConfig, Some(userConfig))
-    val json = Config.configAsJson(merged)
+    val Success(json) = Config.configAsJson(merged).success
 
     // Assert against JSON structure
     (json \\ "name").head.asString should contain(
@@ -205,7 +219,8 @@ class ConfigTest
     *
     * To see the output, change `ignore` to `in` and run this test with:
     *
-    * core/testOnly *ConfigTest -- -z "print the merged devcontainer content for manual inspection"
+    * core/testOnly *ConfigTest -- -z "print the merged devcontainer content for
+    * manual inspection"
     */
   "print the merged devcontainer content for manual inspection" in {
     val projectConfigYaml =
@@ -219,7 +234,7 @@ class ConfigTest
       Config.parseUserConfig(userConfigYaml).success
 
     val merged = Config.mergeConfigs(projectConfig, Some(userConfig))
-    val json = Config.configAsJson(merged)
+    val Success(json) = Config.configAsJson(merged).success
 
     println(json.spaces2)
   }

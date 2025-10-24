@@ -47,8 +47,8 @@ object Devenv {
             for {
               maybeUserConfig <- Config.loadUserConfig(userPaths.devenvConf)
               mergedUserConfig = Config.mergeConfigs(projectConfig, maybeUserConfig)
-              userJson = Config.configAsJson(mergedUserConfig)
-              sharedJson = Config.configAsJson(projectConfig)
+              userJson <- Config.configAsJson(mergedUserConfig)
+              sharedJson <- Config.configAsJson(projectConfig)
               userDevcontainerStatus <- Filesystem.writeFile(
                 devEnvPaths.userDevcontainerFile,
                 userJson.spaces2

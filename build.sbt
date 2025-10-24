@@ -33,7 +33,8 @@ lazy val core = project
       "io.circe" %% "circe-parser" % circeVersion,
       "io.circe" %% "circe-generic-extras" % "0.14.5-RC1",
       "io.circe" %% "circe-yaml-scalayaml" % "0.16.1",
-      "com.lihaoyi" %% "fansi" % "0.5.0",
+      "com.lihaoyi" %% "fansi" % "0.5.1",
+      "org.typelevel" %% "cats-core" % "2.13.0",
       "org.scalatest" %% "scalatest" % "3.2.19" % Test
     )
   )

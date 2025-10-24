@@ -64,35 +64,45 @@ object Config {
     }
   }
 
-  def configAsJson(projectConfig: ProjectConfig): Json = {
-    val customizations = JsonObject(
-      "vscode" -> Json.obj(
-        "extensions" -> projectConfig.plugins.vscode.asJson
-      ),
-      "jetbrains" -> Json.obj(
-        "plugins" -> projectConfig.plugins.intellij.asJson
-      )
-    )
-
-    val commands = JsonObject.fromIterable(
-      List(
-        "postCreateCommand" -> combineCommands(projectConfig.postCreateCommand),
-        "postStartCommand" -> combineCommands(projectConfig.postStartCommand)
-      ).collect { case (key, Some(value)) =>
-        key -> Json.fromString(value)
-      }
-    )
-
-    commands
-      .deepMerge(
-        JsonObject(
-          "name" -> projectConfig.name.asJson,
-          "image" -> projectConfig.image.asJson,
-          "customizations" -> customizations.asJson,
-          "forwardPorts" -> projectConfig.forwardPorts.asJson
+  def configAsJson(projectConfig: ProjectConfig): Try[Json] = {
+    // Apply modules to get the final configuration
+    Modules.applyModules(projectConfig).map { config =>
+      val customizations = JsonObject(
+        "vscode" -> Json.obj(
+          "extensions" -> config.plugins.vscode.asJson
+        ),
+        "jetbrains" -> Json.obj(
+          "plugins" -> config.plugins.intellij.asJson
         )
       )
-      .asJson
+
+      val commands = JsonObject.fromIterable(
+        List(
+          "postCreateCommand" -> combineCommands(config.postCreateCommand),
+          "postStartCommand" -> combineCommands(config.postStartCommand)
+        ).collect { case (key, Some(value)) =>
+          key -> Json.fromString(value)
+        }
+      )
+
+      val baseConfig = JsonObject(
+        "name" -> config.name.asJson,
+        "image" -> config.image.asJson,
+        "customizations" -> customizations.asJson,
+        "forwardPorts" -> config.forwardPorts.asJson
+      )
+
+      // Add optional fields if they exist
+      val withFeatures = if (config.features.nonEmpty) {
+        baseConfig.add("features", config.features.asJson)
+      } else baseConfig
+
+      val withMounts = if (config.mounts.nonEmpty) {
+        withFeatures.add("mounts", config.mounts.asJson)
+      } else withFeatures
+
+      commands.deepMerge(withMounts).asJson
+    }
   }
 
   private def combineCommands(commands: List[Command]): Option[String] = {

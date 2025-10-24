@@ -5,6 +5,7 @@ import io.circe.{Encoder, Json}
 case class ProjectConfig(
     name: String,
     image: String = "mcr.microsoft.com/devcontainers/base:ubuntu",
+    modules: List[String] = Nil,
     forwardPorts: List[ForwardPort] = Nil,
     remoteEnv: List[Env] = Nil,
     containerEnv: List[Env] = Nil,
