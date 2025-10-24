@@ -1,0 +1,40 @@
+# Scala/sbt
+*.class
+*.log
+target/
+project/target/
+project/project/
+
+# IDE
+.idea/
+.bsp/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Metals (Scala language server)
+.metals/
+.bloop/
+metals.sbt
+
+# Build artifacts
+*.jar
+*.war
+*.ear
+
+# Scala Native
+*.ll
+*.o
+*.so
+*.dylib
+*.a
+
+# Test reports
+*.xml
+
+# Temporary files
+*.tmp
+.cache
+
