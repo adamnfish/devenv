@@ -2,6 +2,15 @@
 
 A CLI tool for managing devcontainer configurations. Generates both user-specific and project-specific devcontainer.json files from simple YAML configuration.
 
+## Build
+
+```bash
+sbt cli/stage
+cli/target/universal/stage/bin/devenv
+```
+
+Requires Java 8+. Build with Java 21 for optimal performance.
+
 ## Usage
 
 ```bash

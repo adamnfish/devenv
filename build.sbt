@@ -22,6 +22,7 @@ lazy val root = (project in file("."))
   .aggregate(cli, core)
 
 lazy val cli = (project in file("cli"))
+  .enablePlugins(JavaAppPackaging)
   .settings(
     fork := true,
     // Fast startup JVM options (used when running via `sbt run`)
@@ -32,7 +33,17 @@ lazy val cli = (project in file("cli"))
       "-XX:+UseSerialGC",        // Faster GC for short-lived processes
       "-Xms64m",                 // Small initial heap
       "-Xmx512m"                 // Reasonable max heap
-    )
+    ),
+    // Native packager settings for CLI distribution
+    Compile / mainClass := Some("com.gu.devenv.Main"),
+    executableScriptName := "devenv",
+    // Use the same optimized JVM options for the packaged binary
+    bashScriptExtraDefines += """addJava "-XX:+TieredCompilation"""",
+    bashScriptExtraDefines += """addJava "-XX:TieredStopAtLevel=1"""",
+    bashScriptExtraDefines += """addJava "-Xshare:auto"""",
+    bashScriptExtraDefines += """addJava "-XX:+UseSerialGC"""",
+    bashScriptExtraDefines += """addJava "-Xms64m"""",
+    bashScriptExtraDefines += """addJava "-Xmx512m""""
   )
   .dependsOn(core)
 

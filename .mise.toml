@@ -1,2 +1,4 @@
 [tools]
-java = "openjdk-25"
+#java = "openjdk-25"
+java = "corretto-21"
+sbt = "1.11.7"
