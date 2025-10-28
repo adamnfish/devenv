@@ -1,0 +1,22 @@
+# Test project configuration for E2E testing
+name: "E2E Test Project"
+
+modules:
+  - apt-updates
+  - mise
+
+image: "mcr.microsoft.com/devcontainers/base:ubuntu"
+
+forwardPorts:
+  - containerPort: 3000
+    hostPort: 3000
+
+plugins:
+  vscode:
+    - ms-python.python
+  intellij:
+    - org.intellij.scala
+
+postCreateCommand:
+  - cmd: "echo 'Container created'"
+    workingDirectory: "/workspaces/test"

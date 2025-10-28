@@ -63,3 +63,37 @@ modules:
   - apt-updates
   # - mise  (disabled)
 ```
+
+## Testing
+
+### Unit and Integration Tests
+
+The core logic is tested with ScalaTest:
+
+```bash
+sbt test
+```
+
+Tests cover:
+- Configuration parsing and merging
+- Module system functionality
+- File system operations
+- Full init/generate workflows
+
+### E2E Tests
+
+End-to-end tests verify the packaged binary across multiple scenarios:
+
+```bash
+./test-sandbox/e2e/run-tests.sh
+```
+
+The E2E suite:
+- Builds the packaged binary with `sbt stage`
+- Tests `devenv init` from scratch
+- Tests `devenv generate` with modules (apt-updates, mise)
+- Tests generate with project configuration
+- Validates JSON output and file structure
+- Runs in isolated temp directories
+
+The E2E tests ensure the CLI behaves correctly in real-world usage scenarios.

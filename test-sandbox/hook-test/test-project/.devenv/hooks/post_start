@@ -1,0 +1,4 @@
+#!/bin/bash
+echo "=== POST_START HOOK EXECUTED ==="
+echo "Starting development server..."
+echo "=== POST_START HOOK COMPLETE ==="

@@ -1,0 +1,11 @@
+# Project configuration
+name: "User Config Test Project"
+
+modules:
+  - apt-updates
+
+plugins:
+  vscode:
+    - dbaeumer.vscode-eslint
+  intellij:
+    - com.intellij.java

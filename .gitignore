@@ -38,3 +38,8 @@ metals.sbt
 *.tmp
 .cache
 
+# E2E test artifacts
+test-sandbox/e2e/**/devcontainer.json
+test-sandbox/e2e/**/.devcontainer/user/
+test-sandbox/e2e/**/.devcontainer/shared/
+

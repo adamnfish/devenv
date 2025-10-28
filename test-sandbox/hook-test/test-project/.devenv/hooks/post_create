@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo "=== POST_CREATE HOOK EXECUTED ==="
+echo "Current working directory: $(pwd)"
+echo "Available tools:"
+echo "  Node version: $(node --version 2>/dev/null || echo 'not found')"
+echo "  Python version: $(python --version 2>/dev/null || echo 'not found')"
+echo "  Mise version: $(mise --version 2>/dev/null || echo 'not found')"
+echo "Running npm install..."
+npm install || echo "npm install failed (this is expected if no package.json)"
+echo "=== POST_CREATE HOOK COMPLETE ==="

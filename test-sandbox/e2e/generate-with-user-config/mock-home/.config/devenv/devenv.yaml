@@ -1,0 +1,12 @@
+# User-specific configuration
+plugins:
+  vscode:
+    - vscodevim.vim
+    - ms-vscode.theme-tomorrowkit
+  intellij:
+    - IdeaVIM
+
+dotfiles:
+  repository: "https://github.com/testuser/dotfiles"
+  targetPath: "~/dotfiles"
+  installCommand: "./install.sh"

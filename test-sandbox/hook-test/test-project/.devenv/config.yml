@@ -1,0 +1,6 @@
+name: "hook-test-project"
+image: "mcr.microsoft.com/devcontainers/base:ubuntu-24.04"
+ports:
+  - "3000:3000"
+post_create_command: "echo 'Config post_create executed - project is ready!'"
+post_start_command: "echo 'Config post_start executed - starting services...'"
