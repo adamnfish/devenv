@@ -15,6 +15,16 @@ ThisBuild / Test / testOptions += Tests.Argument("-oD") // Show test durations
 
 val circeVersion = "0.14.15"
 
+// Fast startup JVM options for short-lived CLI processes
+val cliJvmOptions = Seq(
+  "-XX:+TieredCompilation",  // Enable tiered compilation
+  "-XX:TieredStopAtLevel=1", // Stop at C1 compiler (faster startup, less optimization)
+  "-Xshare:auto",            // Use class data sharing if available
+  "-XX:+UseSerialGC",        // Faster GC for short-lived processes
+  "-Xms64m",                 // Small initial heap
+  "-Xmx512m"                 // Reasonable max heap
+)
+
 lazy val root = (project in file("."))
   .settings(
     name := "devenv"
@@ -24,26 +34,10 @@ lazy val root = (project in file("."))
 lazy val cli = (project in file("cli"))
   .enablePlugins(JavaAppPackaging)
   .settings(
-    fork := true,
-    // Fast startup JVM options (used when running via `sbt run`)
-    javaOptions ++= Seq(
-      "-XX:+TieredCompilation",  // Enable tiered compilation
-      "-XX:TieredStopAtLevel=1", // Stop at C1 compiler (faster startup, less optimization)
-      "-Xshare:auto",            // Use class data sharing if available
-      "-XX:+UseSerialGC",        // Faster GC for short-lived processes
-      "-Xms64m",                 // Small initial heap
-      "-Xmx512m"                 // Reasonable max heap
-    ),
-    // Native packager settings for CLI distribution
     Compile / mainClass := Some("com.gu.devenv.Main"),
     executableScriptName := "devenv",
-    // Use the same optimized JVM options for the packaged binary
-    bashScriptExtraDefines += """addJava "-XX:+TieredCompilation"""",
-    bashScriptExtraDefines += """addJava "-XX:TieredStopAtLevel=1"""",
-    bashScriptExtraDefines += """addJava "-Xshare:auto"""",
-    bashScriptExtraDefines += """addJava "-XX:+UseSerialGC"""",
-    bashScriptExtraDefines += """addJava "-Xms64m"""",
-    bashScriptExtraDefines += """addJava "-Xmx512m""""
+    // Apply CLI JVM options to packaged binary
+    bashScriptExtraDefines ++= cliJvmOptions.map(opt => s"""addJava "$opt"""")
   )
   .dependsOn(core)
 

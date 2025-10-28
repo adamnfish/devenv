@@ -11,6 +11,13 @@ cli/target/universal/stage/bin/devenv
 
 Requires Java 8+. Build with Java 21 for optimal performance.
 
+## Package
+
+```bash
+# Create distributable archive
+sbt cli/universal:packageBin  # Creates cli/target/universal/devenv-*.zip
+```
+
 ## Usage
 
 ```bash
