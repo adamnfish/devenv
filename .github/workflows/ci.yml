@@ -30,7 +30,12 @@ jobs:
     - name: Find package file
       id: find-package
       run: |
+        ls -la cli/target/universal || true
         PACKAGE_FILE=$(ls cli/target/universal/devenv-*.zip)
+        if [[ ! -f "$PACKAGE_FILE" ]]; then
+          echo "ERROR: package not found: $PACKAGE_FILE"
+          exit 1
+        fi
         echo "package_file=$PACKAGE_FILE" >> $GITHUB_OUTPUT
         echo "package_name=$(basename $PACKAGE_FILE)" >> $GITHUB_OUTPUT
 
