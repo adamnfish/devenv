@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-package:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'corretto'
+        cache: 'sbt'
+
+    - name: Test and package
+      run: sbt test cli/universal:packageBin
+
+    - name: Find package file
+      id: find-package
+      run: |
+        PACKAGE_FILE=$(ls cli/target/universal/devenv-*.zip)
+        echo "package_file=$PACKAGE_FILE" >> $GITHUB_OUTPUT
+        echo "package_name=$(basename $PACKAGE_FILE)" >> $GITHUB_OUTPUT
+
+    - name: Upload package artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: devenv-package
+        path: ${{ steps.find-package.outputs.package_file }}
+        retention-days: 30
+
+    - name: Run E2E tests
+      run: |
+        # Extract and test the packaged binary
+        cd test-sandbox
+        unzip -q ${{ steps.find-package.outputs.package_file }} -d .
+        PACKAGE_DIR=$(basename ${{ steps.find-package.outputs.package_file }} .zip)
+        export PATH="$(pwd)/$PACKAGE_DIR/bin:$PATH"
+        cd e2e
+        ./run-tests.sh

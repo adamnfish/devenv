@@ -34,6 +34,8 @@ lazy val root = (project in file("."))
 lazy val cli = (project in file("cli"))
   .enablePlugins(JavaAppPackaging)
   .settings(
+    name := "devenv",
+    version := "0.1.0",
     Compile / mainClass := Some("com.gu.devenv.Main"),
     executableScriptName := "devenv",
     // Apply CLI JVM options to packaged binary
