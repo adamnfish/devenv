@@ -56,8 +56,13 @@ jobs:
       run: |
         # Extract and test the packaged binary
         cd test-sandbox
-        unzip -q devenv-*.zip -d .
-        PACKAGE_DIR=$(ls -1 devenv-*.zip | head -1 | sed 's/\.zip$//')
+        PACKAGE_FILE=$(ls devenv-*.zip 2>/dev/null | head -1)
+        if [[ -z "$PACKAGE_FILE" ]]; then
+          echo "ERROR: No package file found in test-sandbox"
+          exit 1
+        fi
+        unzip -q "$PACKAGE_FILE" -d .
+        PACKAGE_DIR="${PACKAGE_FILE%.zip}"
         export PATH="$(pwd)/$PACKAGE_DIR/bin:$PATH"
         cd e2e
         ./run-tests.sh
