@@ -57,7 +57,7 @@ jobs:
         # Extract and test the packaged binary
         cd test-sandbox
         unzip -q devenv-*.zip -d .
-        PACKAGE_DIR=$(basename devenv-*.zip .zip)
+        PACKAGE_DIR=$(ls -1 devenv-*.zip | head -1 | sed 's/\.zip$//')
         export PATH="$(pwd)/$PACKAGE_DIR/bin:$PATH"
         cd e2e
         ./run-tests.sh
