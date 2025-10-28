@@ -40,18 +40,24 @@ jobs:
         echo "package_name=$(basename $PACKAGE_FILE)" >> $GITHUB_OUTPUT
 
     - name: Upload package artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: devenv-package
-        path: ${{ steps.find-package.outputs.package_file }}
+        path: cli/target/universal/devenv-*.zip
         retention-days: 30
+
+    - name: Download package artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: devenv-package
+        path: test-sandbox
 
     - name: Run E2E tests
       run: |
         # Extract and test the packaged binary
         cd test-sandbox
-        unzip -q ${{ steps.find-package.outputs.package_file }} -d .
-        PACKAGE_DIR=$(basename ${{ steps.find-package.outputs.package_file }} .zip)
+        unzip -q devenv-*.zip -d .
+        PACKAGE_DIR=$(basename devenv-*.zip .zip)
         export PATH="$(pwd)/$PACKAGE_DIR/bin:$PATH"
         cd e2e
         ./run-tests.sh
