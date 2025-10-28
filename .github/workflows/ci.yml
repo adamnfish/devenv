@@ -30,7 +30,12 @@ jobs:
     - name: Find package file
       id: find-package
       run: |
+        ls -la cli/target/universal || true
         PACKAGE_FILE=$(ls cli/target/universal/devenv-*.zip)
+        if [[ ! -f "$PACKAGE_FILE" ]]; then
+          echo "ERROR: package not found: $PACKAGE_FILE"
+          exit 1
+        fi
         echo "package_file=$PACKAGE_FILE" >> $GITHUB_OUTPUT
         echo "package_name=$(basename $PACKAGE_FILE)" >> $GITHUB_OUTPUT
 
@@ -44,9 +49,10 @@ jobs:
     - name: Run E2E tests
       run: |
         # Extract and test the packaged binary
+        PACKAGE_FILE="${{ steps.find-package.outputs.package_file }}"
+        PACKAGE_DIR=$(basename "$PACKAGE_FILE" .zip)
         cd test-sandbox
-        unzip -q ${{ steps.find-package.outputs.package_file }} -d .
-        PACKAGE_DIR=$(basename ${{ steps.find-package.outputs.package_file }} .zip)
+        unzip -q "../$PACKAGE_FILE" -d .
         export PATH="$(pwd)/$PACKAGE_DIR/bin:$PATH"
         cd e2e
         ./run-tests.sh
