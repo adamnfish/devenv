@@ -13,9 +13,9 @@ TESTS_RUN=0
 TESTS_PASSED=0
 TESTS_FAILED=0
 
-# Get the project root (parent of test-sandbox)
+# Get the project root (parent of e2e)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BINARY="$PROJECT_ROOT/cli/target/universal/stage/bin/devenv"
 
 echo -e "${BLUE}========================================${NC}"

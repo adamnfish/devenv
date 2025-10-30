@@ -1,4 +1,0 @@
-name: test-project
-image: mcr.microsoft.com/devcontainers/base:ubuntu-24.04
-ports:
-- 3000:3000

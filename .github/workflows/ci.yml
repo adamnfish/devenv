@@ -51,8 +51,7 @@ jobs:
         # Extract and test the packaged binary
         PACKAGE_FILE="${{ steps.find-package.outputs.package_file }}"
         PACKAGE_DIR=$(basename "$PACKAGE_FILE" .zip)
-        cd test-sandbox
-        unzip -q "../$PACKAGE_FILE" -d .
+        unzip -q "$PACKAGE_FILE" -d .
         export PATH="$(pwd)/$PACKAGE_DIR/bin:$PATH"
         cd e2e
         ./run-tests.sh

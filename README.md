@@ -85,7 +85,7 @@ Tests cover:
 End-to-end tests verify the packaged binary across multiple scenarios:
 
 ```bash
-./test-sandbox/e2e/run-tests.sh
+./e2e/run-tests.sh
 ```
 
 The E2E suite:
