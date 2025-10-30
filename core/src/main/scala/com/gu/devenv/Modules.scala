@@ -12,6 +12,8 @@ object Modules {
       features: Map[String, Json] = Map.empty,
       mounts: List[Mount] = Nil,
       plugins: Plugins = Plugins.empty,
+      containerEnv: List[Env] = Nil,
+      remoteEnv: List[Env] = Nil,
       postCreateCommands: List[Command] = Nil
   )
 
@@ -41,6 +43,8 @@ object Modules {
         intellij = contribution.plugins.intellij ++ config.plugins.intellij,
         vscode = contribution.plugins.vscode ++ config.plugins.vscode
       ),
+      containerEnv = contribution.containerEnv ++ config.containerEnv,
+      remoteEnv = contribution.remoteEnv ++ config.remoteEnv,
       postCreateCommand = contribution.postCreateCommands ++ config.postCreateCommand
     )
 
@@ -73,7 +77,7 @@ object Modules {
 
   private val mise = ModuleContribution(
     features = Map(
-      "ghcr.io/devcontainers-extra/features/mise:1" -> Json.obj()
+//      "ghcr.io/devcontainers-extra/features/mise:1" -> Json.obj()
     ),
     mounts = List(
       Mount.ExplicitMount(
@@ -86,24 +90,25 @@ object Modules {
       intellij = List("com.github.l34130.mise"),
       vscode = List("hverlin.mise-vscode")
     ),
+    containerEnv = List(
+      Env("MISE_DATA_DIR", "/mnt/mise-data")
+    ),
+    remoteEnv = List(
+      Env("PATH", "${containerEnv:PATH}:/mnt/mise-data/shims")
+    ),
     postCreateCommands = List(
       Command(
         cmd = """bash -c 'echo -e "\033[1;34m[setup] Setting up mise...\033[0m" && """ +
+          // ensure correct ownership of the shared mise data volume
           "sudo chown -R vscode:vscode /mnt/mise-data && " +
-          // Make sure mise is active after installation
-          """echo "eval \"\$(mise activate --shims bash)\"" >> ~/.bashrc && """ +
-          """echo "eval \"\$(mise activate --shims zsh)\"" >> ~/.zshrc && """ +
-          // Shims mode doesn't update paths on failed installs, and sbt installation will fail if requested
-          // See: https://github.com/mise-plugins/mise-sbt/issues/3
-          // Activating without shims means the Java path will get set correctly, so repeated installation will work
-          // We don't persist this setup for future sessions because mise's shims are already on the path
-          """eval "$(mise activate bash)" && """ +
-          "mise --version && " +
+          // install the mise binary
+          """curl https://mise.run | sh && """ +
+          """mise --version && """ +
           // This enables the repository's config files
           // See: https://mise.jdx.dev/cli/trust.html
-          "mise trust || true && " +
-          // We run this twice because of the Java / sbt issue linked above
-          """for i in 1 2; do mise install && break; echo "mise install failed, retrying in 2 seconds... (attempt $i)"; sleep 2; done && """ +
+          """mise trust || true && """ +
+          // do a mise install and print a warning if it fails
+          """mise install || echo -e "\033[1;33m[setup] mise install failed. You may need to run `mise install` manually inside the container.\033[0m" && """ +
           // Make sure mise is active after installation
           "mise doctor && " +
           """echo -e "\033[1;32m[setup] mise setup complete.\033[0m"'""",

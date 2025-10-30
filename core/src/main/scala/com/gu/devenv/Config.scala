@@ -98,7 +98,15 @@ object Config {
         withFeatures.add("mounts", config.mounts.asJson)
       } else withFeatures
 
-      commands.deepMerge(withMounts).asJson
+      val withContainerEnv = if (config.containerEnv.nonEmpty) {
+        withMounts.add("containerEnv", envListToJson(config.containerEnv))
+      } else withMounts
+
+      val withRemoteEnv = if (config.remoteEnv.nonEmpty) {
+        withContainerEnv.add("remoteEnv", envListToJson(config.remoteEnv))
+      } else withContainerEnv
+
+      commands.deepMerge(withRemoteEnv).asJson
     }
 
   private def combineCommands(commands: List[Command]): Option[String] =
@@ -109,6 +117,11 @@ object Config {
           .map(command => s"(cd ${command.workingDirectory} && ${command.cmd})")
           .mkString(" && ")
       )
+
+  private def envListToJson(envList: List[Env]): Json =
+    Json.obj(
+      envList.map(env => env.name -> Json.fromString(env.value)): _*
+    )
 
   private def applyPlugins(
       projectPlugins: Plugins,

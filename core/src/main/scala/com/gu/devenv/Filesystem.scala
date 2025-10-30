@@ -88,6 +88,7 @@ object Filesystem {
   private val devenvContents =
     """|# Devenv project configuration
        |# Edit this file to configure your project's devcontainer
+       |# and then run `devenv generate` to create the devcontainer.json files
        |
        |# REQUIRED: Change this to your project name
        |name: "CHANGE_ME"

@@ -239,6 +239,9 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         sharedJson should include("ghcr.io/devcontainers-extra/features/mise:1")
         sharedJson should include("hverlin.mise-vscode")
         sharedJson should include("com.github.l34130.mise")
+        sharedJson should include("MISE_DATA_DIR")
+        sharedJson should include("/mnt/mise-data")
+        sharedJson should include("${containerEnv:PATH}:/mnt/mise-data/shims")
       }
 
       "should apply multiple modules" in withTempDirs { (tempDir, userConfigDir) =>

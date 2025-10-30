@@ -58,6 +58,14 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
       mount.target shouldBe "/mnt/mise-data"
       mount.`type` shouldBe "volume"
 
+      // Should add mise container environment variable
+      result.containerEnv should have length 1
+      result.containerEnv.head shouldBe Env("MISE_DATA_DIR", "/mnt/mise-data")
+
+      // Should add mise remote environment variable for PATH
+      result.remoteEnv should have length 1
+      result.remoteEnv.head shouldBe Env("PATH", "${containerEnv:PATH}:/mnt/mise-data/shims")
+
       // Should add mise setup commands
       result.postCreateCommand should have length 1
       result.postCreateCommand.head.cmd should include("mise install")
@@ -215,6 +223,28 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
       val result = Modules.applyModuleContribution(config, contribution)
 
       result.plugins.intellij should contain allOf ("intellij-plugin1", "intellij-plugin2")
+    }
+
+    "add containerEnv from module contribution" in {
+      val config = ProjectConfig(name = "Test")
+      val contribution = Modules.ModuleContribution(
+        containerEnv = List(Env("VAR1", "value1"), Env("VAR2", "value2"))
+      )
+
+      val result = Modules.applyModuleContribution(config, contribution)
+
+      result.containerEnv should contain allOf (Env("VAR1", "value1"), Env("VAR2", "value2"))
+    }
+
+    "add remoteEnv from module contribution" in {
+      val config = ProjectConfig(name = "Test")
+      val contribution = Modules.ModuleContribution(
+        remoteEnv = List(Env("PATH", "/custom/path"), Env("HOME", "/custom/home"))
+      )
+
+      val result = Modules.applyModuleContribution(config, contribution)
+
+      result.remoteEnv should contain allOf (Env("PATH", "/custom/path"), Env("HOME", "/custom/home"))
     }
 
     "prepend postCreateCommands from module contribution" in {
