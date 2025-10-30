@@ -88,11 +88,25 @@ object Modules {
     ),
     postCreateCommands = List(
       Command(
-        cmd = """echo -e "\033[1;34m[setup] Setting up mise...\033[0m" && """ +
-          "eval \"$(mise activate bash)\" && " +
+        cmd = """bash -c 'echo -e "\033[1;34m[setup] Setting up mise...\033[0m" && """ +
+          "sudo chown -R vscode:vscode /mnt/mise-data && " +
+          // Make sure mise is active after installation
+          """echo "eval \"\$(mise activate --shims bash)\"" >> ~/.bashrc && """ +
+          """echo "eval \"\$(mise activate --shims zsh)\"" >> ~/.zshrc && """ +
+          // Shims mode doesn't update paths on failed installs, and sbt installation will fail if requested
+          // See: https://github.com/mise-plugins/mise-sbt/issues/3
+          // Activating without shims means the Java path will get set correctly, so repeated installation will work
+          // We don't persist this setup for future sessions because mise's shims are already on the path
+          """eval "$(mise activate bash)" && """ +
           "mise --version && " +
+          // This enables the repository's config files
+          // See: https://mise.jdx.dev/cli/trust.html
           "mise trust || true && " +
-          """for i in 1 2; do mise install && break; echo "mise install failed, retrying in 2 seconds... (attempt $i)"; sleep 2; done""",
+          // We run this twice because of the Java / sbt issue linked above
+          """for i in 1 2; do mise install && break; echo "mise install failed, retrying in 2 seconds... (attempt $i)"; sleep 2; done && """ +
+          // Make sure mise is active after installation
+          "mise doctor && " +
+          """echo -e "\033[1;32m[setup] mise setup complete.\033[0m"'""",
         workingDirectory = "."
       )
     )
