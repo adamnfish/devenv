@@ -105,13 +105,21 @@ class ConfigTest
       "vscode" as List("scalameta.metals", "scala-lang.scala", "GitHub.copilot")
     )
 
-    // Dotfiles commands should be prepended to postCreateCommand
-    merged.postCreateCommand should have length 4
-    merged.postCreateCommand.take(2) shouldBe List(
-      Command("git clone https://github.com/example/dotfiles.git ~", "."),
-      Command("install.sh", "~")
-    )
-    merged.postCreateCommand.drop(2) shouldBe projectConfig.postCreateCommand
+    // Dotfiles commands should be appended to postCreateCommand
+    merged.postCreateCommand should have length 4 // 2 project commands + 2 dotfiles commands
+    merged.postCreateCommand.take(2) shouldBe projectConfig.postCreateCommand
+
+    // The dotfiles commands should be two separate commands with proper working directories
+    val cloneCmd = merged.postCreateCommand(2)
+    cloneCmd.workingDirectory shouldBe "."
+    cloneCmd.cmd should include("git clone https://github.com/example/dotfiles.git ~")
+    cloneCmd.cmd should include("[dotfiles] Cloning")
+
+    val installCmd = merged.postCreateCommand(3)
+    installCmd.workingDirectory shouldBe "~"
+    installCmd.cmd should include("install.sh")
+    installCmd.cmd should include("[dotfiles] Running install command")
+    installCmd.cmd should include("Install failed") // Error handling message
 
     // Other fields should remain unchanged from project config
     merged should have(
@@ -216,6 +224,7 @@ class ConfigTest
       "com.github.copilot"
     )
 
+    // Check that dotfiles commands are in postCreateCommand
     (json \\ "postCreateCommand").head.asString.value should include(
       "git clone https://github.com/example/dotfiles.git"
     )
