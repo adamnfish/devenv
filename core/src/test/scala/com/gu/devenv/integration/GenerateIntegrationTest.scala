@@ -236,12 +236,12 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
 
         val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
 
-        sharedJson should include("ghcr.io/devcontainers-extra/features/mise:1")
         sharedJson should include("hverlin.mise-vscode")
         sharedJson should include("com.github.l34130.mise")
         sharedJson should include("MISE_DATA_DIR")
         sharedJson should include("/mnt/mise-data")
         sharedJson should include("${containerEnv:PATH}:/mnt/mise-data/shims")
+        sharedJson should include("mise install")
       }
 
       "should apply multiple modules" in withTempDirs { (tempDir, userConfigDir) =>
@@ -255,7 +255,7 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
 
         sharedJson should include("apt-get update")
-        sharedJson should include("ghcr.io/devcontainers-extra/features/mise:1")
+        sharedJson should include("mise install")
       }
 
       "should fail with unknown module" in withTempDirs { (tempDir, userConfigDir) =>
@@ -283,9 +283,9 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         val userJson   = Files.readString(devcontainerDir.resolve("user/devcontainer.json"))
         val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
 
-        // Both should have mise module features
-        userJson should include("ghcr.io/devcontainers-extra/features/mise:1")
-        sharedJson should include("ghcr.io/devcontainers-extra/features/mise:1")
+        // Both should have mise module mounts
+        userJson should include("docker-mise-data-volume")
+        sharedJson should include("docker-mise-data-volume")
 
         // Both should have project plugins
         userJson should include("project-plugin-1")

@@ -76,16 +76,6 @@ object Modules {
   )
 
   private val mise = ModuleContribution(
-    features = Map(
-//      "ghcr.io/devcontainers-extra/features/mise:1" -> Json.obj()
-    ),
-    mounts = List(
-      Mount.ExplicitMount(
-        source = "docker-mise-data-volume",
-        target = "/mnt/mise-data",
-        `type` = "volume"
-      )
-    ),
     plugins = Plugins(
       intellij = List("com.github.l34130.mise"),
       vscode = List("hverlin.mise-vscode")
@@ -95,6 +85,13 @@ object Modules {
     ),
     remoteEnv = List(
       Env("PATH", "${containerEnv:PATH}:/mnt/mise-data/shims")
+    ),
+    mounts = List(
+      Mount.ExplicitMount(
+        source = "docker-mise-data-volume",
+        target = "/mnt/mise-data",
+        `type` = "volume"
+      )
     ),
     postCreateCommands = List(
       Command(

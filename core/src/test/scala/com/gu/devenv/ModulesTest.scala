@@ -48,8 +48,6 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
       result.plugins.vscode should contain allOf ("hverlin.mise-vscode", "existing-vscode")
       result.plugins.intellij should contain allOf ("com.github.l34130.mise", "existing-intellij")
 
-      // Should add mise feature
-      result.features should contain key "ghcr.io/devcontainers-extra/features/mise:1"
 
       // Should add mise mount
       result.mounts should have length 1
@@ -69,7 +67,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
       // Should add mise setup commands
       result.postCreateCommand should have length 1
       result.postCreateCommand.head.cmd should include("mise install")
-      result.postCreateCommand.head.cmd should include("mise activate")
+      result.postCreateCommand.head.cmd should include("mise doctor")
     }
 
     "apply apt-updates module correctly" in {
@@ -104,8 +102,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
       result.plugins.vscode should contain("hverlin.mise-vscode")
       result.plugins.intellij should contain("com.github.l34130.mise")
 
-      // Should have mise feature and mount
-      result.features should contain key "ghcr.io/devcontainers-extra/features/mise:1"
+      // Should have mise mount
       result.mounts should have length 1
     }
 
@@ -121,9 +118,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
 
       val result = Modules.applyModules(config).success.value
 
-      // Module features should be present
-      result.features should contain key "ghcr.io/devcontainers-extra/features/mise:1"
-      // Explicit features should override/be preserved
+      // Explicit features should be preserved
       result.features should contain key explicitFeature
       result.features(explicitFeature).asObject.value("version").value.asString.value shouldBe "1.0"
 

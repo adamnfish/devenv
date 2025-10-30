@@ -27,6 +27,8 @@ object Filesystem {
     */
   def updateFile(path: Path, content: String): Try[FileSystemStatus] = Try {
     val exists = Files.exists(path)
+    // Create parent directories if they don't exist
+    Option(path.getParent).foreach(Files.createDirectories(_))
     Files.write(
       path,
       content.getBytes(java.nio.charset.StandardCharsets.UTF_8),

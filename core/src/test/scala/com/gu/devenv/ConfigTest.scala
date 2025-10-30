@@ -160,9 +160,8 @@ class ConfigTest
       "com.github.l34130.mise"
     )
 
-    // Should have mise feature from the module
+    // Should have features
     val features = (json \\ "features").head.asObject.value
-    features.keys should contain("ghcr.io/devcontainers-extra/features/mise:1")
     features.keys should contain("ghcr.io/devcontainers/features/docker-in-docker:1")
 
     // Should have mise mount from the module
@@ -175,7 +174,6 @@ class ConfigTest
     postCreateCommand should include("sbt update")
     postCreateCommand should include("sbt compile")
     postCreateCommand should include("mise install")
-    postCreateCommand should include("mise activate")
 
     (json \\ "postStartCommand").head.asString.value shouldBe
       "(cd . && echo 'Container started successfully')"
