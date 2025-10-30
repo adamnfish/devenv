@@ -38,6 +38,34 @@ Two devcontainer files are generated:
 - `.devcontainer/user/devcontainer.json` - Merged config with your personal settings
 - `.devcontainer/shared/devcontainer.json` - Project-only config for team use
 
+### Dotfiles Support
+
+You can configure your personal dotfiles repository in your user config (`~/.config/devenv/devenv.yaml`). When you run `devenv generate`, the dotfiles will be automatically cloned and installed in your user-specific devcontainer during the `postCreateCommand` phase.
+
+**Example user config with dotfiles:**
+
+```yaml
+plugins:
+  vscode:
+    - "GitHub.copilot"
+  intellij:
+    - "com.github.copilot"
+
+dotfiles:
+  repository: "https://github.com/yourusername/dotfiles.git"
+  targetPath: "~/dotfiles"
+  installCommand: "./install.sh"
+```
+
+The dotfiles configuration has three fields:
+- **`repository`** - Git repository URL for your dotfiles
+- **`targetPath`** - Where to clone the dotfiles in the container
+- **`installCommand`** - Script to run to install/setup the dotfiles (relative to targetPath)
+
+This will generate shell commands in the `postCreateCommand` that clone your dotfiles repository and run the installation script. Dotfiles are only included in the user-specific devcontainer, not in the shared one.
+
+**Note:** Dotfiles setup runs after project and module setup commands, ensuring your personal configuration doesn't interfere with the shared development environment setup.
+
 ## Modules
 
 Modules are pre-configured bundles of features, plugins, and commands that can be enabled in your project config. They're included in the default `.devenv` template and can be disabled by commenting them out or removing them from the list.

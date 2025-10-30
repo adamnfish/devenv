@@ -56,8 +56,7 @@ object Config {
 
       projectConfig.copy(
         plugins = mergedPlugins,
-        postCreateCommand = dotfilesCommands ++ projectConfig.postCreateCommand,
-        postStartCommand = projectConfig.postStartCommand
+        postCreateCommand = projectConfig.postCreateCommand ++ dotfilesCommands
       )
     }
 
@@ -134,11 +133,16 @@ object Config {
 
   private def applyDotfiles(dotfiles: Dotfiles): List[Command] = {
     val cloneCommand = Command(
-      s"git clone ${dotfiles.repository} ${dotfiles.targetPath}",
+      s"""echo -e "\\033[1;34m[dotfiles] Cloning dotfiles from ${dotfiles.repository}...\\033[0m" && \\
+         |git clone ${dotfiles.repository} ${dotfiles.targetPath} || \\
+         |echo -e "\\033[1;33m[dotfiles] Clone failed. Skipping dotfiles setup.\\033[0m\"""".stripMargin,
       "."
     )
     val installCommand = Command(
-      dotfiles.installCommand,
+      s"""echo -e "\\033[1;34m[dotfiles] Running install command: ${dotfiles.installCommand}...\\033[0m" && \\
+         |${dotfiles.installCommand} && \\
+         |echo -e "\\033[1;32m[dotfiles] Dotfiles setup complete.\\033[0m" || \\
+         |echo -e "\\033[1;33m[dotfiles] Install failed. You may need to set up dotfiles manually.\\033[0m\"""".stripMargin,
       dotfiles.targetPath
     )
     List(cloneCommand, installCommand)
