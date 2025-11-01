@@ -47,6 +47,9 @@ Modules are pre-configured bundles of features, plugins, and commands that can b
 - **`apt-updates`** - Applies apt security updates during container creation (Ubuntu/Debian only)
 - **`mise`** - Installs [mise](https://mise.jdx.dev/) for version management of languages and tools
 - **`docker-in-docker`** - Enables running Docker containers within the devcontainer. Uses an isolated Docker daemon (not host socket) with minimal capabilities for better security. Disabled by default.
+  - Image storage is ephemeral (lost on container rebuild)
+  - Containers run inside the devcontainer, not directly on host network
+  - Use `docker run -p 8080:8080` then access via devcontainer's forwarded ports
 
 **Example configuration:**
 
