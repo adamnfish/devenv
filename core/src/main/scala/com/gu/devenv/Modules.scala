@@ -14,7 +14,9 @@ object Modules {
       plugins: Plugins = Plugins.empty,
       containerEnv: List[Env] = Nil,
       remoteEnv: List[Env] = Nil,
-      postCreateCommands: List[Command] = Nil
+      postCreateCommands: List[Command] = Nil,
+      capAdd: List[String] = Nil,
+      securityOpt: List[String] = Nil
   )
 
   /** Apply modules to a project config, merging their contributions. Explicit config takes
@@ -45,19 +47,22 @@ object Modules {
       ),
       containerEnv = contribution.containerEnv ++ config.containerEnv,
       remoteEnv = contribution.remoteEnv ++ config.remoteEnv,
-      postCreateCommand = contribution.postCreateCommands ++ config.postCreateCommand
+      postCreateCommand = contribution.postCreateCommands ++ config.postCreateCommand,
+      capAdd = contribution.capAdd ++ config.capAdd,
+      securityOpt = contribution.securityOpt ++ config.securityOpt
     )
 
   private def getModuleContribution(
       moduleName: String
   ): Try[ModuleContribution] =
     moduleName match {
-      case "apt-updates" => Success(aptUpdates)
-      case "mise"        => Success(mise)
+      case "apt-updates"      => Success(aptUpdates)
+      case "mise"             => Success(mise)
+      case "docker-in-docker" => Success(dockerInDocker)
       case unknown =>
         Failure(
           new IllegalArgumentException(
-            s"Unknown module: '$unknown'. Available modules: apt-updates, mise"
+            s"Unknown module: '$unknown'. Available modules: apt-updates, mise, docker-in-docker"
           )
         )
     }
@@ -112,5 +117,17 @@ object Modules {
         workingDirectory = "."
       )
     )
+  )
+
+  private val dockerInDocker = ModuleContribution(
+    features = Map(
+      "ghcr.io/devcontainers/features/docker-in-docker:2" -> Json.obj(
+        "version" -> Json.fromString("latest"),
+        "moby" -> Json.fromBoolean(true),
+        "dockerDashComposeVersion" -> Json.fromString("v2")
+      )
+    ),
+    capAdd = List("SYS_ADMIN"),
+    securityOpt = List("seccomp=unconfined")
   )
 }

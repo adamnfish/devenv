@@ -33,6 +33,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
       result.failure.exception.getMessage should include("Unknown module: 'unknown-module'")
       result.failure.exception.getMessage should include("apt-updates")
       result.failure.exception.getMessage should include("mise")
+      result.failure.exception.getMessage should include("docker-in-docker")
     }
 
     "apply mise module correctly" in {
@@ -83,6 +84,26 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
       result.postCreateCommand.head.cmd should include("apt-get update")
       result.postCreateCommand.head.cmd should include("apt-get upgrade")
       result.postCreateCommand.head.cmd should include("DEBIAN_FRONTEND=noninteractive")
+    }
+
+    "apply docker-in-docker module correctly" in {
+      val config = ProjectConfig(
+        name = "Test Project",
+        modules = List("docker-in-docker")
+      )
+
+      val result = Modules.applyModules(config).success.value
+
+      // Should add docker-in-docker feature
+      result.features should contain key "ghcr.io/devcontainers/features/docker-in-docker:2"
+      val dindFeature = result.features("ghcr.io/devcontainers/features/docker-in-docker:2")
+      dindFeature.asObject.value("version").value.asString.value shouldBe "latest"
+      dindFeature.asObject.value("moby").value.asBoolean.value shouldBe true
+      dindFeature.asObject.value("dockerDashComposeVersion").value.asString.value shouldBe "v2"
+
+      // Should add security capabilities
+      result.capAdd should contain("SYS_ADMIN")
+      result.securityOpt should contain("seccomp=unconfined")
     }
 
     "apply multiple modules in order" in {
@@ -288,6 +309,49 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
       val result = Modules.applyModuleContribution(config, contribution)
 
       result should equal(config)
+    }
+
+    "add capAdd from module contribution" in {
+      val config = ProjectConfig(name = "Test")
+      val contribution = Modules.ModuleContribution(
+        capAdd = List("SYS_ADMIN", "NET_ADMIN")
+      )
+
+      val result = Modules.applyModuleContribution(config, contribution)
+
+      result.capAdd should contain allOf ("SYS_ADMIN", "NET_ADMIN")
+    }
+
+    "add securityOpt from module contribution" in {
+      val config = ProjectConfig(name = "Test")
+      val contribution = Modules.ModuleContribution(
+        securityOpt = List("seccomp=unconfined", "apparmor=unconfined")
+      )
+
+      val result = Modules.applyModuleContribution(config, contribution)
+
+      result.securityOpt should contain allOf ("seccomp=unconfined", "apparmor=unconfined")
+    }
+
+    "prepend capAdd and securityOpt from module contribution" in {
+      val config = ProjectConfig(
+        name = "Test",
+        capAdd = List("EXPLICIT_CAP"),
+        securityOpt = List("explicit=option")
+      )
+      val contribution = Modules.ModuleContribution(
+        capAdd = List("MODULE_CAP"),
+        securityOpt = List("module=option")
+      )
+
+      val result = Modules.applyModuleContribution(config, contribution)
+
+      result.capAdd should have length 2
+      result.capAdd.head shouldBe "MODULE_CAP"
+      result.capAdd.last shouldBe "EXPLICIT_CAP"
+      result.securityOpt should have length 2
+      result.securityOpt.head shouldBe "module=option"
+      result.securityOpt.last shouldBe "explicit=option"
     }
   }
 }

@@ -106,7 +106,15 @@ object Config {
         withContainerEnv.add("remoteEnv", envListToJson(config.remoteEnv))
       } else withContainerEnv
 
-      commands.deepMerge(withRemoteEnv).asJson
+      val withCapAdd = if (config.capAdd.nonEmpty) {
+        withRemoteEnv.add("capAdd", config.capAdd.asJson)
+      } else withRemoteEnv
+
+      val withSecurityOpt = if (config.securityOpt.nonEmpty) {
+        withCapAdd.add("securityOpt", config.securityOpt.asJson)
+      } else withCapAdd
+
+      commands.deepMerge(withSecurityOpt).asJson
     }
 
   private def combineCommands(commands: List[Command]): Option[String] =

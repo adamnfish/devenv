@@ -98,10 +98,12 @@ object Filesystem {
        |# Modules: Built-in functionality
        |# - apt-updates: Apply apt security updates during container creation
        |# - mise: Install mise for version management (https://mise.jdx.dev/)
+       |# - docker-in-docker: Enable running Docker containers within the devcontainer
        |# To disable, comment out or remove items from this list
        |modules:
        |  - apt-updates
        |  - mise
+       |  # - docker-in-docker
        |
        |# Optional: Container image to use (defaults to latest ubuntu LTS)
        |# image: "mcr.microsoft.com/devcontainers/base:ubuntu"
