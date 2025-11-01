@@ -15,7 +15,9 @@ case class ProjectConfig(
     postStartCommand: List[Command] = Nil,
     features: Map[String, Json] = Map.empty,
     remoteUser: String = "vscode",
-    updateRemoteUserUID: Boolean = true
+    updateRemoteUserUID: Boolean = true,
+    capAdd: List[String] = Nil,
+    securityOpt: List[String] = Nil
 )
 
 case class UserConfig(
