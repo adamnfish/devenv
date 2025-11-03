@@ -18,40 +18,6 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Generated version: $VERSION"
 
-  build-native-image-linux:
-    needs: generate-version
-    runs-on: ubuntu-latest-arm64
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Java and sbt
-      uses: guardian/setup-scala@v1
-
-    - uses: graalvm/setup-graalvm@eec48106e0bf45f2976c2ff0c3e22395cced8243 # v1.4.2
-      with:
-        java-version: '21'
-        distribution: 'graalvm'
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        native-image-job-reports: 'true'
-
-    - name: Build native image
-      run: sbt "cli/GraalVMNativeImage/packageBin"
-
-    - name: Verify and rename binary
-      run: |
-        ls -lh cli/target/graalvm-native-image/devenv
-        file cli/target/graalvm-native-image/devenv
-        ./cli/target/graalvm-native-image/devenv --help || true
-        cp cli/target/graalvm-native-image/devenv devenv-${{ needs.generate-version.outputs.version }}-linux-arm64
-
-    - name: Upload native binary
-      uses: actions/upload-artifact@v4
-      with:
-        name: devenv-linux-arm64
-        path: devenv-${{ needs.generate-version.outputs.version }}-linux-arm64
-        retention-days: 90
-
   build-native-image-macos:
     needs: generate-version
     runs-on: macos-15
@@ -87,7 +53,7 @@ jobs:
         retention-days: 90
 
   create-release:
-    needs: [generate-version, build-native-image-linux, build-native-image-macos]
+    needs: [generate-version, build-native-image-macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -95,12 +61,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: Download Linux binary
-      uses: actions/download-artifact@v4
-      with:
-        name: devenv-linux-arm64
-        path: .
 
     - name: Download macOS binary
       uses: actions/download-artifact@v4
@@ -114,25 +74,17 @@ jobs:
         tag_name: ${{ needs.generate-version.outputs.version }}
         name: devenv ${{ needs.generate-version.outputs.version }}
         files: |
-          devenv-${{ needs.generate-version.outputs.version }}-linux-arm64
           devenv-${{ needs.generate-version.outputs.version }}-macos-arm64
         body: |
           ## devenv (Development Build)
           
           **Build Date:** ${{ needs.generate-version.outputs.version }}
           
-          Native binaries for ARM64 architectures.
+          Native binaries for MacOS architectures.
           
           ⚠️ This is a development release built from the `${{ github.ref_name }}` branch.
           
           ### Installation
-          
-          **Linux (ARM64):**
-          ```bash
-          curl -L -o devenv https://github.com/${{ github.repository }}/releases/download/${{ needs.generate-version.outputs.version }}/devenv-${{ needs.generate-version.outputs.version }}-linux-arm64
-          chmod +x devenv
-          sudo mv devenv /usr/local/bin/
-          ```
           
           **macOS (Apple Silicon):**
           ```bash

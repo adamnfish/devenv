@@ -136,11 +136,6 @@ The project uses GitHub Actions to build and publish native binaries for both Li
 Users can install the release binaries:
 
 ```bash
-# Linux ARM64
-curl -L -o devenv https://github.com/YOUR_ORG/devenv2/releases/download/20251103-143022/devenv-20251103-143022-linux-arm64
-chmod +x devenv
-sudo mv devenv /usr/local/bin/
-
 # macOS Apple Silicon
 curl -L -o devenv https://github.com/YOUR_ORG/devenv2/releases/download/20251103-143022/devenv-20251103-143022-macos-arm64
 chmod +x devenv
