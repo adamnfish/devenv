@@ -24,6 +24,10 @@ metals.sbt
 *.war
 *.ear
 
+# GraalVM Native Image
+cli/target/graalvm-native-image/
+*.build_artifacts.txt
+
 # Scala Native
 *.ll
 *.o

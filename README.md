@@ -4,19 +4,23 @@ A CLI tool for managing devcontainer configurations. Generates both user-specifi
 
 ## Build
 
+### JVM Build (Development)
+
 ```bash
+# Build and run locally
 sbt cli/stage
 cli/target/universal/stage/bin/devenv
 ```
 
-Requires Java 8+. Build with Java 21 for optimal performance.
+### Native Image Build (Production)
 
-## Package
+Build a standalone native executable with GraalVM Native Image. The GraalVM dependency is included using `mise`.
 
 ```bash
-# Create distributable archive
-sbt cli/universal:packageBin  # Creates cli/target/universal/devenv-*.zip
+sbt "cli/GraalVMNativeImage/packageBin"
 ```
+
+The resulting binary will be at `cli/target/graalvm-native-image/devenv`.
 
 ## Usage
 
@@ -38,14 +42,16 @@ Two devcontainer files are generated:
 - `.devcontainer/user/devcontainer.json` - Merged config with your personal settings
 - `.devcontainer/shared/devcontainer.json` - Project-only config for team use
 
-## Modules
+Your user-specific file is excluded from the Git repository with a .gitignore entry. The general project file can be checked in to provide a project environment for cloud-based editors.
+
+### Modules
 
 Modules are pre-configured bundles of features, plugins, and commands that can be enabled in your project config. They're included in the default `.devenv` template and can be disabled by commenting them out or removing them from the list.
 
 **Available modules:**
 
 - **`apt-updates`** - Applies apt security updates during container creation (Ubuntu/Debian only)
-- **`mise`** - Installs [mise](https://mise.jdx.dev/) for version management of languages and tools
+- **`mise`** - Installs and configures [mise](https://mise.jdx.dev/) for version management of languages and tools
 
 **Example configuration:**
 
@@ -64,36 +70,80 @@ modules:
   # - mise  (disabled)
 ```
 
+### Dotfiles
+
+You can configure personal dotfiles in your user config (`~/.config/devenv/devenv.yaml`) to automatically clone and install them during container creation:
+
+```yaml
+dotfiles:
+  repository: "your-github-id/your-dotfiles-repo"
+  targetPath: "~/dotfiles"
+  installCommand: "install.sh"
+```
+
+The dotfiles setup runs after project/container setup to avoid interfering with shared configuration. The repository is cloned into the container at the specified path, and the `installCommand` is executed from there.
+
 ## Testing
 
 ### Unit and Integration Tests
 
-The core logic is tested with ScalaTest:
+Use sbt to run the unit and integration tests:
 
 ```bash
 sbt test
 ```
 
-Tests cover:
-- Configuration parsing and merging
-- Module system functionality
-- File system operations
-- Full init/generate workflows
-
 ### E2E Tests
 
-End-to-end tests verify the packaged binary across multiple scenarios:
+The project also includes end-to-end tests verify the CLI program across multiple scenarios:
 
 ```bash
 ./e2e/run-tests.sh
 ```
 
-The E2E suite:
-- Builds the packaged binary with `sbt stage`
-- Tests `devenv init` from scratch
-- Tests `devenv generate` with modules (apt-updates, mise)
-- Tests generate with project configuration
-- Validates JSON output and file structure
-- Runs in isolated temp directories
+The E2E suite packages the CLI in dev/universal mode with `sbt stage`, runs the program against isolated temp directories, and validates the JSON output and file structure to ensure the CLI behaves correctly in real-world scenarios.
 
-The E2E tests ensure the CLI behaves correctly in real-world usage scenarios.
+## Release
+
+The project uses GitHub Actions to build and publish native binaries for both Linux ARM64 and macOS ARM64 as date-based development releases.
+
+**Creating a release:**
+
+1. Go to the [Actions tab](https://github.com/YOUR_ORG/devenv2/actions/workflows/release.yml) on GitHub
+
+2. Click "Run workflow" and select the branch to build from
+
+3. GitHub Actions will automatically:
+    - Build native binaries for Linux ARM64 and macOS ARM64
+    - Create a **draft** GitHub Release with date-based versioning (e.g., `20251103-143022`)
+    - Name the binaries as `devenv-{date}-{platform}-arm64`
+    - Mark the release as a prerelease
+
+4. **Manually verify and publish the release:**
+    - Go to the [Releases page](https://github.com/YOUR_ORG/devenv2/releases) on GitHub
+    - Review the draft release
+    - Test the binaries if needed
+    - Click "Publish release" when ready
+
+**Version management:**
+
+- Releases use date-based versioning: `YYYYMMDD-HHMMSS` (e.g., `20251103-143022`)
+- The `version` in `build.sbt` is for development/snapshots only
+- All releases are marked as prereleases to indicate development status
+
+**Note:** The release workflow is **manual only** - it will not run automatically on pushes or merges. This gives you full control over when to cut a release.
+
+Users can install the release binaries:
+
+```bash
+# Linux ARM64
+curl -L -o devenv https://github.com/YOUR_ORG/devenv2/releases/download/20251103-143022/devenv-20251103-143022-linux-arm64
+chmod +x devenv
+sudo mv devenv /usr/local/bin/
+
+# macOS Apple Silicon
+curl -L -o devenv https://github.com/YOUR_ORG/devenv2/releases/download/20251103-143022/devenv-20251103-143022-macos-arm64
+chmod +x devenv
+sudo mv devenv /usr/local/bin/
+```
+

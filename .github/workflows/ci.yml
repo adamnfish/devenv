@@ -14,15 +14,8 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up JDK
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'corretto'
-        cache: 'sbt'
-
-    - name: Set up SBT
-      uses: sbt/setup-sbt@v1
+    - name: Setup Java and sbt
+      uses: guardian/setup-scala@v1
 
     - name: Test and package
       run: sbt test cli/universal:packageBin
@@ -55,3 +48,4 @@ jobs:
         export PATH="$(pwd)/$PACKAGE_DIR/bin:$PATH"
         cd e2e
         ./run-tests.sh
+

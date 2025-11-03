@@ -13,8 +13,6 @@ ThisBuild / scalacOptions ++= Seq(
 ThisBuild / Test / parallelExecution := true
 ThisBuild / Test / testOptions += Tests.Argument("-oD") // Show test durations
 
-val circeVersion = "0.14.15"
-
 // Fast startup JVM options for short-lived CLI processes
 val cliJvmOptions = Seq(
   "-XX:+TieredCompilation",  // Enable tiered compilation
@@ -25,6 +23,8 @@ val cliJvmOptions = Seq(
   "-Xmx512m"                 // Reasonable max heap
 )
 
+val circeVersion = "0.14.15"
+
 lazy val root = (project in file("."))
   .settings(
     name := "devenv"
@@ -32,14 +32,32 @@ lazy val root = (project in file("."))
   .aggregate(cli, core)
 
 lazy val cli = (project in file("cli"))
-  .enablePlugins(JavaAppPackaging)
+  .enablePlugins(JavaAppPackaging, GraalVMNativeImagePlugin)
   .settings(
-    name := "devenv",
-    version := "0.1.0",
-    Compile / mainClass := Some("com.gu.devenv.Main"),
+    name                 := "devenv",
+    version              := "0.1.0",
+    Compile / mainClass  := Some("com.gu.devenv.Main"),
     executableScriptName := "devenv",
     // Apply CLI JVM options to packaged binary
-    bashScriptExtraDefines ++= cliJvmOptions.map(opt => s"""addJava "$opt"""")
+    bashScriptExtraDefines ++= cliJvmOptions.map(opt => s"""addJava "$opt""""),
+
+    // GraalVM Native Image configuration
+    graalVMNativeImageOptions ++= Seq(
+      "--no-fallback",                     // Fail if native image cannot be built
+      "--initialize-at-build-time",        // Initialize most classes at build time
+      "--enable-url-protocols=http,https", // Enable HTTP/HTTPS
+      "-H:+ReportExceptionStackTraces",    // Better error reporting during build
+      "--verbose",                         // Show build progress
+      // Optimization flags
+      "-O2",        // Optimize for performance
+      "--gc=serial" // Use serial GC (suitable for CLI tools)
+    ),
+
+    // Specify GraalVM version for Docker-based builds
+    // Plugin will automatically configure the container
+
+    // Output binary name
+    GraalVMNativeImage / name := "devenv"
   )
   .dependsOn(core)
 
