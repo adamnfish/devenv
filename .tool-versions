@@ -1,0 +1,4 @@
+graalvm 21
+java corretto-21
+sbt latest
+aqua:aws/aws-cli latest
