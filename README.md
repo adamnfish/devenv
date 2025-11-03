@@ -44,51 +44,7 @@ Two devcontainer files are generated:
 
 Your user-specific file is excluded from the Git repository with a .gitignore entry. The general project file can be checked in to provide a project environment for cloud-based editors.
 
-### Modules
-
-Modules are pre-configured bundles of features, plugins, and commands that can be enabled in your project config. They're included in the default `.devenv` template and can be disabled by commenting them out or removing them from the list.
-
-**Available modules:**
-
-- **`apt-updates`** - Applies apt security updates during container creation (Ubuntu/Debian only)
-- **`mise`** - Installs and configures [mise](https://mise.jdx.dev/) for version management of languages and tools
-- **`mise`** - Installs [mise](https://mise.jdx.dev/) for version management of languages and tools
-- **`docker-in-docker`** - Enables running Docker containers within the devcontainer. Uses an isolated Docker daemon (not host socket) with minimal capabilities for better security. Disabled by default.
-  - Image storage is ephemeral (lost on container rebuild)
-  - Containers run inside the devcontainer, not directly on host network
-  - Use `docker run -p 8080:8080` then access via devcontainer's forwarded ports
-
-**Example configuration:**
-
-```yaml
-# In .devcontainer/devenv.yaml
-modules:
-  - apt-updates
-  - mise
-  # - docker-in-docker
-```
-
-To enable docker-in-docker, uncomment it:
-
-```yaml
-modules:
-  - apt-updates
-  - mise
-  - docker-in-docker  # Now enabled
-```
-
-### Dotfiles
-
-You can configure personal dotfiles in your user config (`~/.config/devenv/devenv.yaml`) to automatically clone and install them during container creation:
-
-```yaml
-dotfiles:
-  repository: "your-github-id/your-dotfiles-repo"
-  targetPath: "~/dotfiles"
-  installCommand: "install.sh"
-```
-
-The dotfiles setup runs after project/container setup to avoid interfering with shared configuration. The repository is cloned into the container at the specified path, and the `installCommand` is executed from there.
+For detailed configuration specifications, see the [Configuration Reference](docs/configuration.md).
 
 ## Testing
 
