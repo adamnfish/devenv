@@ -113,14 +113,26 @@ object Filesystem {
        |#   - 8080  # same port on host and container
        |#   - "8000:9000"  # hostPort:containerPort
        |
-       |# Optional: IDE plugins
+       |# Optional: Mount directories from host to container
+       |# mounts:
+       |#   - "source=${localEnv:HOME}/.gu/example,target=/home/vscode/.gu/example,readonly,type=bind,consistency=cached"
+       |
+       |# Optional: IDE plugins - shared project plugins like language support
        |# plugins:
        |#   vscode: []
        |#   intellij: []
        |
        |# Optional: Commands to run after container creation
-       |# postCreateCommand: []
-       |# postStartCommand: []
+       |# Each command has a 'cmd' field and a 'workingDirectory' field
+       |# e.g.
+       |# postCreateCommand:
+       |#   - cmd: "npm install"
+       |#     workingDirectory: "."
+       |#   - cmd: "make setup"
+       |#     workingDirectory: "/workspaces/project"
+       |# postStartCommand:
+       |#   - cmd: "echo 'Container started successfully'"
+       |#     workingDirectory: "."
        |""".stripMargin
 
   enum FileSystemStatus {
