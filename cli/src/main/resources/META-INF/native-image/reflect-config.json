@@ -27,6 +27,24 @@
     "allPublicFields": true
   },
   {
+    "name": "com.gu.devenv.ForwardPort$SamePort",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.gu.devenv.ForwardPort$DifferentPorts",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
     "name": "com.gu.devenv.Env",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,

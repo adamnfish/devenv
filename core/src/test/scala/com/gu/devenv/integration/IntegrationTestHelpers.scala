@@ -87,8 +87,7 @@ object IntegrationTestHelpers {
        |  intellij:
        |    - project-intellij-plugin
        |forwardPorts:
-       |  - containerPort: 3000
-       |    hostPort: 3000
+       |  - 3000
        |postCreateCommand:
        |  - cmd: "npm install"
        |    workingDirectory: "/workspaces/project"

@@ -23,8 +23,8 @@ class ConfigTest
       "name" as "Scala SBT Development Container",
       "image" as "mcr.microsoft.com/devcontainers/base:ubuntu",
       "forwardPorts" as List(
-        ForwardPort(8080, 8080),
-        ForwardPort(9000, 9000)
+        ForwardPort.SamePort(8080),
+        ForwardPort.DifferentPorts(8000, 9000)
       ),
       "remoteEnv" as List(
         Env("SBT_OPTS", "-Xmx2G -XX:+UseG1GC"),
@@ -147,7 +147,7 @@ class ConfigTest
     val forwardPorts = (json \\ "forwardPorts").head.asArray.value
     forwardPorts should have length 2
     forwardPorts.head.asNumber.flatMap(_.toInt) shouldBe Some(8080)
-    forwardPorts(1).asNumber.flatMap(_.toInt) shouldBe Some(9000)
+    forwardPorts(1).asString shouldBe Some("8000:9000")
 
     val extensions =
       (json \\ "extensions").head.asArray.value.flatMap(_.asString)

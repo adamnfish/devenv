@@ -8,8 +8,7 @@ modules:
 image: "mcr.microsoft.com/devcontainers/base:ubuntu"
 
 forwardPorts:
-  - containerPort: 3000
-    hostPort: 3000
+  - 3000
 
 plugins:
   vscode:
