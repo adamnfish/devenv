@@ -18,23 +18,23 @@ Your user-specific file is excluded from the Git repository with a .gitignore en
 
 The project config (`.devcontainer/devenv.yaml`) supports the following fields:
 
-| Field                 | Required | Description                                                                                     | Default                                       |
-|-----------------------|----------|-------------------------------------------------------------------------------------------------|-----------------------------------------------|
-| `name`                | Yes      | Project name, used as the devcontainer name                                                     | -                                             |
-| `image`               | No       | Base Docker image                                                                               | `mcr.microsoft.com/devcontainers/base:ubuntu` |
-| `modules`             | No       | List of module names to enable (see Modules section)                                            | `[]`                                          |
-| `forwardPorts`        | No       | Port forwarding config, either as integer (maps same port) or `"hostPort:containerPort"` string | `[]`                                          |
-| `remoteEnv`           | No       | Environment variables set in the remote/container environment                                   | `[]`                                          |
-| `containerEnv`        | No       | Environment variables set at container creation time                                            | `[]`                                          |
-| `plugins`             | No       | IDE plugins to install (`intellij`: list of plugin IDs, `vscode`: list of extension IDs)        | `{}`                                          |
-| `mounts`              | No       | Volume mounts, either as Docker mount strings or objects with `source`, `target`, and `type`    | `[]`                                          |
-| `postCreateCommand`   | No       | Commands to run once after container creation                                                   | `[]`                                          |
-| `postStartCommand`    | No       | Commands to run each time the container starts                                                  | `[]`                                          |
-| `features`            | No       | Dev Container features to enable (as key-value pairs)                                           | `{}`                                          |
-| `remoteUser`          | No       | User account to use in the container                                                            | `vscode`                                      |
-| `updateRemoteUserUID` | No       | Whether to update remote user's UID to match host                                               | `true`                                        |
-| `capAdd`              | No       | Linux capabilities to add to the container (use with caution)                                   | `[]`                                          |
-| `securityOpt`         | No       | Security options for the container (use with caution)                                           | `[]`                                          |
+| Field                 | Description                                                                                     | Default                                       |
+|-----------------------|-------------------------------------------------------------------------------------------------|-----------------------------------------------|
+| `name`                | Project name, used as the devcontainer name (required)                                          | -                                             |
+| `image`               | Base Docker image                                                                               | `mcr.microsoft.com/devcontainers/base:ubuntu` |
+| `modules`             | List of module names to enable (see Modules section)                                            | `[]`                                          |
+| `forwardPorts`        | Port forwarding config, either as integer (maps same port) or `"hostPort:containerPort"` string | `[]`                                          |
+| `remoteEnv`           | Environment variables set in the remote/container environment                                   | `[]`                                          |
+| `containerEnv`        | Environment variables set at container creation time                                            | `[]`                                          |
+| `plugins`             | IDE plugins to install (`intellij`: list of plugin IDs, `vscode`: list of extension IDs)        | `{}`                                          |
+| `mounts`              | Volume mounts, either as Docker mount strings or objects with `source`, `target`, and `type`    | `[]`                                          |
+| `postCreateCommand`   | Commands to run once after container creation                                                   | `[]`                                          |
+| `postStartCommand`    | Commands to run each time the container starts                                                  | `[]`                                          |
+| `features`            | Dev Container features to enable (as key-value pairs)                                           | `{}`                                          |
+| `remoteUser`          | User account to use in the container                                                            | `vscode`                                      |
+| `updateRemoteUserUID` | Whether to update remote user's UID to match host                                               | `true`                                        |
+| `capAdd`              | Linux capabilities to add to the container (use with caution)                                   | `[]`                                          |
+| `securityOpt`         | Security options for the container (use with caution)                                           | `[]`                                          |
 
 ### Example
 
@@ -64,20 +64,22 @@ postCreateCommand:
 
 ## User Configuration Spec
 
-The user config (`~/.config/devenv/devenv.yaml`) supports:
+The user config (`~/.config/devenv/devenv.yaml`) supports the following (optional) settings:
 
-| Field      | Required | Description                                                                            |
-|------------|----------|----------------------------------------------------------------------------------------|
-| `plugins`  | No       | Personal IDE plugins (same structure as project config: `intellij` and `vscode` lists) |
-| `dotfiles` | No       | Dotfiles repository configuration (see below)                                          |
+| Field      | Description                                                                            |
+|------------|----------------------------------------------------------------------------------------|
+| `plugins`  | Personal IDE plugins (same structure as project config: `intellij` and `vscode` lists) |
+| `dotfiles` | Dotfiles repository configuration (see below)                                          |
 
 ### Dotfiles Configuration
 
-| Field            | Required | Description                                                 |
-|------------------|----------|-------------------------------------------------------------|
-| `repository`     | Yes      | GitHub repository (format: `username/repo`)                 |
-| `targetPath`     | Yes      | Path where dotfiles will be cloned in the container         |
-| `installCommand` | Yes      | Script to run for installation (executed from `targetPath`) |
+The `dotfiles` field in the user config allows you to specify a GitHub repository containing your personal dotfiles to be cloned and installed into the devcontainer. All three fields are required.
+
+| Field            | Description                                                 |
+|------------------|-------------------------------------------------------------|
+| `repository`     | GitHub repository (format: `username/repo`)                 |
+| `targetPath`     | Path where dotfiles will be cloned in the container         |
+| `installCommand` | Script to run for installation (executed from `targetPath`) |
 
 ### Example
 
