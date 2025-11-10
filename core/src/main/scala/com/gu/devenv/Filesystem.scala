@@ -109,7 +109,9 @@ object Filesystem {
        |# image: "mcr.microsoft.com/devcontainers/base:ubuntu"
        |
        |# Optional: Ports to forward
-       |# forwardPorts: []
+       |# forwardPorts:
+       |#   - 8080  # same port on host and container
+       |#   - "8000:9000"  # hostPort:containerPort
        |
        |# Optional: IDE plugins
        |# plugins:

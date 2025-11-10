@@ -1,6 +1,10 @@
 package com.gu.devenv
 
-import io.circe.{Encoder, Json}
+import io.circe.{Decoder, DecodingFailure, Encoder, Json}
+import cats._
+import cats.syntax.all._
+
+import scala.util.Try
 
 case class ProjectConfig(
     name: String,
@@ -25,12 +29,75 @@ case class UserConfig(
     dotfiles: Option[Dotfiles]
 )
 
-case class ForwardPort(containerPort: Int, hostPort: Int)
+enum ForwardPort {
+  case SamePort(port: Int)
+  case DifferentPorts(hostPort: Int, containerPort: Int)
+}
+
 object ForwardPort {
+
+  /** we express container/host port forwards as either:
+    *   - an Int (same port) (e.g. 8080)
+    *   - a String with format "hostPort:containerPort" (e.g. "8000:9000")
+    */
+  given Decoder[ForwardPort.SamePort] = Decoder[Int].flatMap { portNumber =>
+    Decoder.instance { c =>
+      validatePortNumber(portNumber, c).map { validPort =>
+        SamePort(validPort)
+      }
+    }
+  }
+
+  given Decoder[ForwardPort.DifferentPorts] = Decoder[String].flatMap { portString =>
+    Decoder.instance { c =>
+      portString.split(":") match {
+        case Array(hostPortStr, containerPortStr) =>
+          for {
+            hostPort <- Try(hostPortStr.toInt).toEither.leftMap(_ =>
+              DecodingFailure(
+                s"Invalid host port: $hostPortStr",
+                c.history
+              )
+            )
+            containerPort <- Try(containerPortStr.toInt).toEither.leftMap(_ =>
+              DecodingFailure(
+                s"Invalid container port: $containerPortStr",
+                c.history
+              )
+            )
+            validHostPort      <- validatePortNumber(hostPort, c)
+            validContainerPort <- validatePortNumber(containerPort, c)
+          } yield DifferentPorts(validHostPort, validContainerPort)
+        case _ =>
+          Left(
+            DecodingFailure(
+              s"Invalid port mapping format: $portString. Expected format 'hostPort:containerPort'.",
+              c.history
+            )
+          )
+      }
+    }
+  }
+  given Decoder[ForwardPort] = summon[Decoder[ForwardPort.SamePort]]
+    .or(summon[Decoder[ForwardPort.DifferentPorts]].widen)
+
+  private def validatePortNumber(
+      port: Int,
+      c: io.circe.HCursor
+  ): Either[DecodingFailure, Int] =
+    if (port >= 1 && port <= 65535)
+      Right(port)
+    else
+      Left(
+        DecodingFailure(
+          s"Invalid port number: $port. Port numbers must be between 1 and 65535.",
+          c.history
+        )
+      )
+
   given Encoder[ForwardPort] = Encoder.instance {
-    case ForwardPort(containerPort, hostPort) if containerPort == hostPort =>
-      Json.fromInt(containerPort)
-    case ForwardPort(containerPort, hostPort) =>
+    case SamePort(port) => Json.fromInt(port)
+    case DifferentPorts(hostPort, containerPort) =>
       Json.fromString(s"$hostPort:$containerPort")
   }
 }

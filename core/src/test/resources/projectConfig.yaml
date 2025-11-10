@@ -3,10 +3,8 @@ image: "mcr.microsoft.com/devcontainers/base:ubuntu"
 modules:
   - mise
 forwardPorts:
-  - containerPort: 8080
-    hostPort: 8080
-  - containerPort: 9000
-    hostPort: 9000
+  - 8080
+  - "8000:9000"
 remoteEnv:
   - name: "SBT_OPTS"
     value: "-Xmx2G -XX:+UseG1GC"

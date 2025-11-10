@@ -178,7 +178,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
         name = "Test Project",
         image = "custom:image",
         modules = List("mise"),
-        forwardPorts = List(ForwardPort(3000, 3000)),
+        forwardPorts = List(ForwardPort.SamePort(3000)),
         remoteUser = "customuser",
         updateRemoteUserUID = false,
         postStartCommand = List(Command("start script", "."))
@@ -189,7 +189,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
       // Non-module-affected fields should be preserved
       result.name shouldBe "Test Project"
       result.image shouldBe "custom:image"
-      result.forwardPorts shouldBe List(ForwardPort(3000, 3000))
+      result.forwardPorts shouldBe List(ForwardPort.SamePort(3000))
       result.remoteUser shouldBe "customuser"
       result.updateRemoteUserUID shouldBe false
       result.postStartCommand shouldBe List(Command("start script", "."))
