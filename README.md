@@ -70,20 +70,24 @@ The E2E suite packages the CLI in dev/universal mode with `sbt stage`, runs the 
 
 The project uses GitHub Actions to build and publish native binaries for both Linux ARM64 and macOS ARM64 as date-based development releases.
 
+> [!WARNING]
+> The GitHub actions workflow does not properly sign the MacOS binaries, so the workflow artifact is currently not usable.
+> Building the MacOS binary locally on a Macbook works ok for now, this binary can be uploaded to the draft release in Step 4, below.
+
 **Creating a release:**
 
-1. Go to the [Actions tab](https://github.com/YOUR_ORG/devenv2/actions/workflows/release.yml) on GitHub
+1. Go to the [Actions tab](https://github.com/adamnfish/devenv/actions/workflows/release.yml) on GitHub
 
 2. Click "Run workflow" and select the branch to build from
 
 3. GitHub Actions will automatically:
     - Build native binaries for Linux ARM64 and macOS ARM64
     - Create a **draft** GitHub Release with date-based versioning (e.g., `20251103-143022`)
-    - Name the binaries as `devenv-{date}-{platform}-arm64`
+    - Name the binaries as `devenv-{date-version}-{platform}-arm64`
     - Mark the release as a prerelease
 
 4. **Manually verify and publish the release:**
-    - Go to the [Releases page](https://github.com/YOUR_ORG/devenv2/releases) on GitHub
+    - Go to the [Releases page](https://github.com/adamnfish/devenv/releases) on GitHub
     - Review the draft release
     - Test the binaries if needed
     - Click "Publish release" when ready
@@ -94,14 +98,13 @@ The project uses GitHub Actions to build and publish native binaries for both Li
 - The `version` in `build.sbt` is for development/snapshots only
 - All releases are marked as prereleases to indicate development status
 
-**Note:** The release workflow is **manual only** - it will not run automatically on pushes or merges. This gives you full control over when to cut a release.
+**Note:** The release workflow is triggered manually - it will not run automatically on pushes or merges to give full control over when to cut a release.
 
 Users can install the release binaries:
 
 ```bash
 # macOS Apple Silicon
-curl -L -o devenv https://github.com/YOUR_ORG/devenv2/releases/download/20251103-143022/devenv-20251103-143022-macos-arm64
+curl -L -o devenv https://github.com/adamnfish/devenv/releases/download/<VERSION>/devenv-<VERSION>-macos-arm64
 chmod +x devenv
 sudo mv devenv /usr/local/bin/
 ```
-
