@@ -45,17 +45,15 @@ object Devenv {
             Success(GenerateResult.ConfigNotCustomized)
           } else {
             for {
-              maybeUserConfig <- Config.loadUserConfig(userPaths.devenvConf)
-              mergedUserConfig = Config.mergeConfigs(projectConfig, maybeUserConfig)
-              userJson   <- Config.configAsJson(mergedUserConfig)
-              sharedJson <- Config.configAsJson(projectConfig)
+              maybeUserConfig        <- Config.loadUserConfig(userPaths.devenvConf)
+              (userJson, sharedJson) <- generateConfigs(projectConfig, maybeUserConfig)
               userDevcontainerStatus <- Filesystem.updateFile(
                 devEnvPaths.userDevcontainerFile,
-                userJson.spaces2
+                userJson
               )
               sharedDevcontainerStatus <- Filesystem.updateFile(
                 devEnvPaths.sharedDevcontainerFile,
-                sharedJson.spaces2
+                sharedJson
               )
             } yield GenerateResult.Success(
               userDevcontainerStatus,
@@ -65,6 +63,102 @@ object Devenv {
         }
       } yield result
     }
+  }
+
+  def check(
+      devcontainerDir: Path,
+      userConfigPath: Path
+  ): Try[CheckResult] = {
+    val devEnvPaths = resolveDevenvPaths(devcontainerDir)
+    val userPaths   = resolveUserConfigPaths(userConfigPath)
+
+    // Check if project has been initialized with a devenv configuration file
+    if (!java.nio.file.Files.exists(devEnvPaths.devenvFile)) {
+      Success(CheckResult.NotInitialized)
+    } else {
+      for {
+        projectConfig <- Config.loadProjectConfig(devEnvPaths.devenvFile)
+        result <- {
+          // Check if the config has been customized
+          if (projectConfig.name == PLACEHOLDER_PROJECT_NAME) {
+            Success(CheckResult.NotInitialized)
+          } else {
+            checkDevcontainerFiles(
+              devEnvPaths,
+              userPaths,
+              projectConfig,
+              devcontainerDir
+            )
+          }
+        }
+      } yield result
+    }
+  }
+
+  private def checkDevcontainerFiles(
+      devEnvPaths: DevEnvPaths,
+      userPaths: UserConfigPaths,
+      projectConfig: ProjectConfig,
+      devcontainerDir: Path
+  ): Try[CheckResult] =
+    for {
+      maybeUserConfig                        <- Config.loadUserConfig(userPaths.devenvConf)
+      (expectedUserJson, expectedSharedJson) <- generateConfigs(projectConfig, maybeUserConfig)
+      actualUserJson <- Filesystem
+        .readFile(devEnvPaths.userDevcontainerFile)
+        .recover { case _ => "" }
+      actualSharedJson <- Filesystem
+        .readFile(devEnvPaths.sharedDevcontainerFile)
+        .recover { case _ => "" }
+    } yield compareDevcontainerFiles(
+      expectedUserJson,
+      actualUserJson,
+      expectedSharedJson,
+      actualSharedJson,
+      devcontainerDir
+    )
+
+  private def compareDevcontainerFiles(
+      expectedUserJson: String,
+      actualUserJson: String,
+      expectedSharedJson: String,
+      actualSharedJson: String,
+      devcontainerDir: Path
+  ): CheckResult = {
+    val userDevcontainerPath   = s"${devcontainerDir.getFileName}/user/devcontainer.json"
+    val sharedDevcontainerPath = s"${devcontainerDir.getFileName}/shared/devcontainer.json"
+
+    val userMismatch = if (expectedUserJson != actualUserJson) {
+      Some(FileDiff(userDevcontainerPath, expected = expectedUserJson, actualUserJson))
+    } else None
+
+    val sharedMismatch = if (expectedSharedJson != actualSharedJson) {
+      Some(
+        FileDiff(sharedDevcontainerPath, expected = expectedSharedJson, actual = actualSharedJson)
+      )
+    } else None
+
+    if (userMismatch.isEmpty && sharedMismatch.isEmpty) {
+      CheckResult.Match(userDevcontainerPath, sharedDevcontainerPath)
+    } else {
+      CheckResult.Mismatch(
+        userMismatch,
+        sharedMismatch,
+        userDevcontainerPath,
+        sharedDevcontainerPath
+      )
+    }
+  }
+
+  private def generateConfigs(
+      projectConfig: ProjectConfig,
+      maybeUserConfig: Option[UserConfig]
+  ): Try[(String, String)] = {
+    val mergedUserConfig = Config.mergeConfigs(projectConfig, maybeUserConfig)
+    for {
+      userJson   <- Config.configAsJson(mergedUserConfig)
+      sharedJson <- Config.configAsJson(projectConfig)
+    } yield (userJson.spaces2, sharedJson.spaces2)
   }
 
   private def resolveDevenvPaths(devcontainerDir: Path): DevEnvPaths = {
@@ -117,4 +211,25 @@ object Devenv {
     case object NotInitialized      extends GenerateResult
     case object ConfigNotCustomized extends GenerateResult
   }
+
+  sealed trait CheckResult
+  object CheckResult {
+    case class Match(
+        userPath: String,
+        sharedPath: String
+    ) extends CheckResult
+    case class Mismatch(
+        userMismatch: Option[FileDiff],
+        sharedMismatch: Option[FileDiff],
+        userPath: String,
+        sharedPath: String
+    ) extends CheckResult
+    case object NotInitialized extends CheckResult
+  }
+
+  case class FileDiff(
+      path: String,
+      expected: String,
+      actual: String
+  )
 }
