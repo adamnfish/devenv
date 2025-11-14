@@ -70,6 +70,12 @@ object IntegrationTestHelpers {
        |  - mise
        |""".stripMargin
 
+  val projectConfigWithModules: String =
+    """|name: "Project With Modules"
+       |modules:
+       |  - apt-updates
+       |""".stripMargin
+
   val projectConfigWithUnknownModule: String =
     """|name: "Project With Unknown Module"
        |modules:

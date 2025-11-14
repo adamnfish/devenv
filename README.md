@@ -30,6 +30,9 @@ devenv init
 
 # Generate devcontainer.json files from config
 devenv generate
+
+# Check if devcontainer.json files match current config
+devenv check
 ```
 
 ## Configuration
