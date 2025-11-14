@@ -129,7 +129,7 @@ object Devenv {
     val sharedDevcontainerPath = s"${devcontainerDir.getFileName}/shared/devcontainer.json"
 
     val userMismatch = if (expectedUserJson != actualUserJson) {
-      Some(FileDiff(userDevcontainerPath, expected = expectedUserJson, actualUserJson))
+      Some(FileDiff(userDevcontainerPath, expected = expectedUserJson, actual = actualUserJson))
     } else None
 
     val sharedMismatch = if (expectedSharedJson != actualSharedJson) {
