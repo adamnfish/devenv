@@ -1,7 +1,7 @@
 package com.gu.devenv.integration
 
 import com.gu.devenv.Devenv
-import com.gu.devenv.Devenv.CheckResult
+import com.gu.devenv.CheckResult
 import com.gu.devenv.integration.IntegrationTestHelpers._
 import org.scalatest.TryValues
 import org.scalatest.freespec.AnyFreeSpec

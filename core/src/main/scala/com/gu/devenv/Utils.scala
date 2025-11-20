@@ -13,14 +13,14 @@ import scala.util.Try
   *
   * Usage:
   *   - Use [[withConditions]] to wrap a for-comprehension that may exit early
-  *   - Use [[condition]] to check a condition and exit early with a result value if not met
+  *   - Use [[exitIf]] to exit early with a result value if a condition is met
   *   - Add a [[liftF]] suffix to normal Try-returning operations so they can be used alongside
-  *     condition checks.
+  *     exitIf checks.
   *
   * {{{
   * for {
-  *   // exit early if some condition is not met
-  *   _ <- condition(someConditionIsMet, earlyResultValue)
+  *   // exit early if some bad condition is met
+  *   _ <- exitIf(someBadCondition, earlyResultValue)
   *   // continue with normal operations
   *   value <- someOperation.liftF
   * } yield ...
@@ -30,11 +30,11 @@ object Utils {
   def withConditions[Res](block: => EitherT[Try, Res, Res]): Try[Res] =
     block.value.map(_.merge)
 
-  def condition[Res, A](condition: => Boolean, orElse: Res): EitherT[Try, Res, Unit] =
+  def exitIf[Res, A](condition: => Boolean, result: Res): EitherT[Try, Res, Unit] =
     if (condition)
-      EitherT.rightT(())
+      EitherT.leftT(result)
     else
-      EitherT.leftT(orElse)
+      EitherT.rightT(())
 
   extension [A](ta: Try[A]) {
     // expose liftF on Try, so we don't need to write EitherT.liftF up front on every step

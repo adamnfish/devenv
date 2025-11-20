@@ -54,13 +54,13 @@ object Devenv {
 
     for {
       // exit early if the devenv directory does not exist
-      _ <- condition(
+      _ <- exitIf(
         !java.nio.file.Files.exists(devEnvPaths.devenvFile),
         GenerateResult.NotInitialized
       )
       projectConfig <- Config.loadProjectConfig(devEnvPaths.devenvFile).liftF
       // exit early if the project config has not been configured
-      _ <- condition(
+      _ <- exitIf(
         projectConfig.name == PLACEHOLDER_PROJECT_NAME,
         GenerateResult.ConfigNotCustomized
       )
@@ -96,13 +96,13 @@ object Devenv {
 
     for {
       // exit early if the devenv directory does not exist
-      _ <- condition(
+      _ <- exitIf(
         !java.nio.file.Files.exists(devEnvPaths.devenvFile),
         CheckResult.NotInitialized
       )
       projectConfig <- Config.loadProjectConfig(devEnvPaths.devenvFile).liftF
       // exit early if the project config has not been configured
-      _ <- condition(
+      _ <- exitIf(
         projectConfig.name == PLACEHOLDER_PROJECT_NAME,
         CheckResult.NotInitialized
       )
