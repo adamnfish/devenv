@@ -1,6 +1,5 @@
 package com.gu.devenv
 
-import com.gu.devenv.Devenv.{CheckResult, FileDiff, GenerateResult, InitResult}
 import com.gu.devenv.Filesystem.FileSystemStatus
 import fansi.*
 

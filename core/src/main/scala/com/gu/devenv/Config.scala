@@ -117,6 +117,51 @@ object Config {
       commands.deepMerge(withSecurityOpt).asJson
     }
 
+
+
+  def generateConfigs(
+                               projectConfig: ProjectConfig,
+                               maybeUserConfig: Option[UserConfig]
+                             ): Try[(String, String)] = {
+    val mergedUserConfig = Config.mergeConfigs(projectConfig, maybeUserConfig)
+    for {
+      userJson   <- Config.configAsJson(mergedUserConfig)
+      sharedJson <- Config.configAsJson(projectConfig)
+    } yield (userJson.spaces2, sharedJson.spaces2)
+  }
+
+  def compareDevcontainerFiles(
+      expectedUserJson: String,
+      actualUserJson: String,
+      expectedSharedJson: String,
+      actualSharedJson: String,
+      devcontainerDir: Path
+  ): CheckResult = {
+    val userDevcontainerPath   = s"${devcontainerDir.getFileName}/user/devcontainer.json"
+    val sharedDevcontainerPath = s"${devcontainerDir.getFileName}/shared/devcontainer.json"
+
+    val userMismatch = if (expectedUserJson != actualUserJson) {
+      Some(FileDiff(userDevcontainerPath, expected = expectedUserJson, actual = actualUserJson))
+    } else None
+
+    val sharedMismatch = if (expectedSharedJson != actualSharedJson) {
+      Some(
+        FileDiff(sharedDevcontainerPath, expected = expectedSharedJson, actual = actualSharedJson)
+      )
+    } else None
+
+    if (userMismatch.isEmpty && sharedMismatch.isEmpty) {
+      CheckResult.Match(userDevcontainerPath, sharedDevcontainerPath)
+    } else {
+      CheckResult.Mismatch(
+        userMismatch,
+        sharedMismatch,
+        userDevcontainerPath,
+        sharedDevcontainerPath
+      )
+    }
+  }
+
   private def combineCommands(commands: List[Command]): Option[String] =
     if (commands.isEmpty) None
     else

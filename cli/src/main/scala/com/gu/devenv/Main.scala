@@ -93,11 +93,11 @@ object Main {
       case Success(result) =>
         println(Output.checkResultMessage(result))
         result match {
-          case Devenv.CheckResult.Match(_, _) =>
+          case CheckResult.Match(_, _) =>
             sys.exit(0)
-          case Devenv.CheckResult.Mismatch(_, _, _, _) =>
+          case CheckResult.Mismatch(_, _, _, _) =>
             sys.exit(1)
-          case Devenv.CheckResult.NotInitialized =>
+          case CheckResult.NotInitialized =>
             sys.exit(1)
         }
       case Failure(exception) =>

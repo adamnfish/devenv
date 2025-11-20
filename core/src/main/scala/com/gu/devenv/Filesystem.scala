@@ -7,6 +7,25 @@ import scala.util.Try
 object Filesystem {
   val PLACEHOLDER_PROJECT_NAME = "CHANGE_ME"
 
+  def resolveDevenvPaths(devcontainerDir: Path): DevEnvPaths = {
+    val userDir   = devcontainerDir.resolve("user")
+    val sharedDir = devcontainerDir.resolve("shared")
+    DevEnvPaths(
+      devcontainerDir = devcontainerDir,
+      userDir = userDir,
+      userDevcontainerFile = userDir.resolve("devcontainer.json"),
+      sharedDir = sharedDir,
+      sharedDevcontainerFile = sharedDir.resolve("devcontainer.json"),
+      gitignoreFile = devcontainerDir.resolve(".gitignore"),
+      devenvFile = devcontainerDir.resolve("devenv.yaml")
+    )
+  }
+
+  def resolveUserConfigPaths(root: Path): UserConfigPaths =
+    UserConfigPaths(
+      devenvConf = root.resolve("devenv.yaml")
+    )
+
   def createDirIfNotExists(dir: Path): Try[FileSystemStatus] = Try {
     if (!Files.exists(dir)) {
       Files.createDirectory(dir)
