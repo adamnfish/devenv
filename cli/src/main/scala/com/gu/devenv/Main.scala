@@ -28,7 +28,7 @@ object Main {
         |Commands:
         |  init      Initialize .devcontainer directory structure
         |  generate  Generate devcontainer.json files from .devenv config
-        |  check     Check if devcontainer.json files match current config
+        |  check     Ensure devcontainer.json files match current config
         |""".stripMargin
     )
 

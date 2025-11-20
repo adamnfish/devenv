@@ -27,24 +27,43 @@ import scala.util.Try
   * }}}
   */
 object Utils {
+
+  /** Wrap a for-comprehension that may exit early with a result value, handling the conversion back
+    * to a `Try`.
+    *
+    * This supports Devenv's approach, which is to use `Try` for handling failures, and EitherT for
+    * allowing conditional early-exit in the program's for-comprehensions.
+    */
   def withConditions[Res](block: => EitherT[Try, Res, Res]): Try[Res] =
     block.value.map(_.merge)
 
+  /** A helper for exiting early from a for-comprehension with a result value if a condition is met.
+    */
   def exitIf[Res, A](condition: => Boolean, result: Res): EitherT[Try, Res, Unit] =
     if (condition)
       EitherT.leftT(result)
     else
       EitherT.rightT(())
 
+  /** expose liftF on Try, so we don't need to write EitherT.liftF up front on every step.
+    *
+    * This way round we have the step's intent up front, and its conversion to EitherT at the end of
+    * the line. I prefer this to needing to start every line with EitherT.liftF boilerplate.
+    */
   extension [A](ta: Try[A]) {
-    // expose liftF on Try, so we don't need to write EitherT.liftF up front on every step
     def liftF[Res]: EitherT[Try, Res, A] =
       EitherT.liftF(ta)
   }
 
+  /** This is needed to allow for-comps to use withFilter on EitherT steps (e.g. to unpack tuples).
+    *
+    * {{{
+    * for {
+    *   (thing1, thing2) <- operationReturningTuple
+    * } yield ()
+    * }}}
+    */
   extension [Res, A](op: EitherT[Try, Res, A]) {
-    // this is not used, but needs to exist to allow for-comp steps that unpack tuples
-    // (thing1, thing2) <- operationReturningTuple
     def withFilter(p: A => Boolean): EitherT[Try, Res, A] =
       op.subflatMap { a =>
         if p(a) then Right(a)
