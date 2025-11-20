@@ -1,7 +1,7 @@
 package com.gu.devenv.integration
 
 import com.gu.devenv.Devenv
-import com.gu.devenv.Devenv.GenerateResult
+import com.gu.devenv.GenerateResult
 import com.gu.devenv.Filesystem.FileSystemStatus
 import com.gu.devenv.integration.IntegrationTestHelpers._
 import io.circe.parser._

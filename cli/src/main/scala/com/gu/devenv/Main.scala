@@ -10,6 +10,7 @@ object Main {
     args.headOption match {
       case Some("init")     => init()
       case Some("generate") => generate()
+      case Some("check")    => check()
       case Some(unknown) =>
         System.err.println(s"Unknown command: $unknown")
         printUsage()
@@ -27,6 +28,7 @@ object Main {
         |Commands:
         |  init      Initialize .devcontainer directory structure
         |  generate  Generate devcontainer.json files from .devenv config
+        |  check     Ensure devcontainer.json files match current config
         |""".stripMargin
     )
 
@@ -71,6 +73,35 @@ object Main {
         println(Output.generateResultMessage(result))
       case Failure(exception) =>
         System.err.println(s"Generation failed: ${exception.getMessage}")
+        exception.printStackTrace()
+        sys.exit(1)
+    }
+  }
+
+  /** Checks whether the saved devcontainer.json files match what would be generated from the
+    * current configuration.
+    *
+    * Validates that both user and shared devcontainer files are up-to-date with the current
+    * devenv.yaml configuration. Useful for CI/CD to ensure configs are synchronized.
+    */
+  def check(): Unit = {
+    val devcontainerDir = Paths.get(".devcontainer")
+    val userConfigPath =
+      Paths.get(System.getProperty("user.home"), ".config", "devenv")
+
+    Devenv.check(devcontainerDir, userConfigPath) match {
+      case Success(result) =>
+        println(Output.checkResultMessage(result))
+        result match {
+          case CheckResult.Match(_, _) =>
+            sys.exit(0)
+          case CheckResult.Mismatch(_, _, _, _) =>
+            sys.exit(1)
+          case CheckResult.NotInitialized =>
+            sys.exit(1)
+        }
+      case Failure(exception) =>
+        System.err.println(s"Check failed: ${exception.getMessage}")
         exception.printStackTrace()
         sys.exit(1)
     }

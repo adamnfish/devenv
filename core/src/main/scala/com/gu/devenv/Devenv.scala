@@ -1,22 +1,35 @@
 package com.gu.devenv
 
-import com.gu.devenv.Filesystem.{FileSystemStatus, GitignoreStatus, PLACEHOLDER_PROJECT_NAME}
+import cats._
+import com.gu.devenv.Filesystem.PLACEHOLDER_PROJECT_NAME
 
 import java.nio.file.Path
-import scala.util.{Success, Try}
+import scala.util.Try
+import scala.language.implicitConversions
+import Utils.*
 
 object Devenv {
+
+  /** Sets up the .devcontainer directory structure with necessary subdirectories and files.
+    *
+    * The provided path is treated as the root .devcontainer directory where the following will be
+    * created:
+    *   - user/ (for user-specific devcontainer with merged preferences)
+    *   - shared/ (for project-specific devcontainer that can be checked in)
+    *   - .gitignore (to exclude user directory)
+    *   - devenv.yaml (a 'blank' project-specific configuration file)
+    */
   def init(devcontainerDir: Path): Try[InitResult] = {
-    val paths = resolveDevenvPaths(devcontainerDir)
+    val devEnvPaths = Filesystem.resolveDevenvPaths(devcontainerDir)
 
     for {
       devcontainerStatus <- Filesystem.createDirIfNotExists(
-        paths.devcontainerDir
+        devEnvPaths.devcontainerDir
       )
-      userStatus      <- Filesystem.createDirIfNotExists(paths.userDir)
-      sharedStatus    <- Filesystem.createDirIfNotExists(paths.sharedDir)
-      gitignoreStatus <- Filesystem.setupGitignore(paths.gitignoreFile)
-      devenvStatus    <- Filesystem.setupDevenv(paths.devenvFile)
+      userStatus      <- Filesystem.createDirIfNotExists(devEnvPaths.userDir)
+      sharedStatus    <- Filesystem.createDirIfNotExists(devEnvPaths.sharedDir)
+      gitignoreStatus <- Filesystem.setupGitignore(devEnvPaths.gitignoreFile)
+      devenvStatus    <- Filesystem.setupDevenv(devEnvPaths.devenvFile)
     } yield InitResult(
       devcontainerStatus,
       userStatus,
@@ -26,95 +39,94 @@ object Devenv {
     )
   }
 
+  /** Generates the devcontainer.json files for user-specific and shared configurations by merging
+    * the project and user configurations.
+    *
+    * Uses the provided paths to locate the .devcontainer directory and the user's configuration
+    * file.
+    */
   def generate(
       devcontainerDir: Path,
       userConfigPath: Path
-  ): Try[GenerateResult] = {
-    val devEnvPaths = resolveDevenvPaths(devcontainerDir)
-    val userPaths   = resolveUserConfigPaths(userConfigPath)
+  ): Try[GenerateResult] = withConditions {
+    val devEnvPaths = Filesystem.resolveDevenvPaths(devcontainerDir)
+    val userPaths   = Filesystem.resolveUserConfigPaths(userConfigPath)
 
-    // Check if project has been initialized with a devenv configuration file
-    if (!java.nio.file.Files.exists(devEnvPaths.devenvFile)) {
-      Success(GenerateResult.NotInitialized)
-    } else {
-      for {
-        projectConfig <- Config.loadProjectConfig(devEnvPaths.devenvFile)
-        result <- {
-          // Check if the config has been customized
-          if (projectConfig.name == PLACEHOLDER_PROJECT_NAME) {
-            Success(GenerateResult.ConfigNotCustomized)
-          } else {
-            for {
-              maybeUserConfig <- Config.loadUserConfig(userPaths.devenvConf)
-              mergedUserConfig = Config.mergeConfigs(projectConfig, maybeUserConfig)
-              userJson   <- Config.configAsJson(mergedUserConfig)
-              sharedJson <- Config.configAsJson(projectConfig)
-              userDevcontainerStatus <- Filesystem.updateFile(
-                devEnvPaths.userDevcontainerFile,
-                userJson.spaces2
-              )
-              sharedDevcontainerStatus <- Filesystem.updateFile(
-                devEnvPaths.sharedDevcontainerFile,
-                sharedJson.spaces2
-              )
-            } yield GenerateResult.Success(
-              userDevcontainerStatus,
-              sharedDevcontainerStatus
-            )
-          }
-        }
-      } yield result
-    }
-  }
-
-  private def resolveDevenvPaths(devcontainerDir: Path): DevEnvPaths = {
-    val userDir   = devcontainerDir.resolve("user")
-    val sharedDir = devcontainerDir.resolve("shared")
-    DevEnvPaths(
-      devcontainerDir = devcontainerDir,
-      userDir = userDir,
-      userDevcontainerFile = userDir.resolve("devcontainer.json"),
-      sharedDir = sharedDir,
-      sharedDevcontainerFile = sharedDir.resolve("devcontainer.json"),
-      gitignoreFile = devcontainerDir.resolve(".gitignore"),
-      devenvFile = devcontainerDir.resolve("devenv.yaml")
+    for {
+      // exit early if the devenv directory does not exist
+      _ <- exitIf(
+        !java.nio.file.Files.exists(devEnvPaths.devenvFile),
+        GenerateResult.NotInitialized
+      )
+      projectConfig <- Config.loadProjectConfig(devEnvPaths.devenvFile).liftF
+      // exit early if the project config has not been configured
+      _ <- exitIf(
+        projectConfig.name == PLACEHOLDER_PROJECT_NAME,
+        GenerateResult.ConfigNotCustomized
+      )
+      maybeUserConfig        <- Config.loadUserConfig(userPaths.devenvConf).liftF
+      (userJson, sharedJson) <- Config.generateConfigs(projectConfig, maybeUserConfig).liftF
+      userDevcontainerStatus <- Filesystem
+        .updateFile(devEnvPaths.userDevcontainerFile, userJson)
+        .liftF
+      sharedDevcontainerStatus <- Filesystem
+        .updateFile(devEnvPaths.sharedDevcontainerFile, sharedJson)
+        .liftF
+    } yield GenerateResult.Success(
+      userDevcontainerStatus,
+      sharedDevcontainerStatus
     )
   }
 
-  private def resolveUserConfigPaths(root: Path): UserConfigPaths =
-    UserConfigPaths(
-      devenvConf = root.resolve("devenv.yaml")
-    )
-
-  private case class DevEnvPaths(
+  /** Checks if the existing devcontainer.json files match the expected content based on the current
+    * configuration.
+    *
+    * This may be useful in CI/CD pipelines to ensure that the committed devcontainer files are
+    * up-to-date with the project's configuration.
+    *
+    * Uses the provided paths to locate the .devcontainer directory and the user's configuration
+    * file.
+    */
+  def check(
       devcontainerDir: Path,
-      userDir: Path,
-      userDevcontainerFile: Path,
-      sharedDir: Path,
-      sharedDevcontainerFile: Path,
-      gitignoreFile: Path,
-      devenvFile: Path
-  )
+      userConfigPath: Path
+  ): Try[CheckResult] = withConditions {
+    val devEnvPaths = Filesystem.resolveDevenvPaths(devcontainerDir)
+    val userPaths   = Filesystem.resolveUserConfigPaths(userConfigPath)
 
-  private case class UserConfigPaths(
-      devenvConf: Path
-  )
-
-  case class InitResult(
-      devcontainerStatus: FileSystemStatus,
-      userStatus: FileSystemStatus,
-      sharedStatus: FileSystemStatus,
-      gitignoreStatus: GitignoreStatus,
-      devenvStatus: FileSystemStatus
-  )
-
-  sealed trait GenerateResult
-  object GenerateResult {
-    case class Success(
-        userDevcontainerStatus: FileSystemStatus,
-        sharedDevcontainerStatus: FileSystemStatus
-    ) extends GenerateResult
-    case object NotInitialized      extends GenerateResult
-    case object ConfigNotCustomized extends GenerateResult
+    for {
+      // exit early if the devenv directory does not exist
+      _ <- exitIf(
+        !java.nio.file.Files.exists(devEnvPaths.devenvFile),
+        CheckResult.NotInitialized
+      )
+      projectConfig <- Config.loadProjectConfig(devEnvPaths.devenvFile).liftF
+      // exit early if the project config has not been configured
+      _ <- exitIf(
+        projectConfig.name == PLACEHOLDER_PROJECT_NAME,
+        CheckResult.NotInitialized
+      )
+      maybeUserConfig <- Config.loadUserConfig(userPaths.devenvConf).liftF
+      (expectedUserJson, expectedSharedJson) <- Config
+        .generateConfigs(
+          projectConfig,
+          maybeUserConfig
+        )
+        .liftF
+      actualUserJson <- Filesystem
+        .readFile(devEnvPaths.userDevcontainerFile)
+        .recover { case _ => "" }
+        .liftF
+      actualSharedJson <- Filesystem
+        .readFile(devEnvPaths.sharedDevcontainerFile)
+        .recover { case _ => "" }
+        .liftF
+    } yield Config.compareDevcontainerFiles(
+      expectedUserJson,
+      actualUserJson,
+      expectedSharedJson,
+      actualSharedJson,
+      devcontainerDir
+    )
   }
 }

@@ -1,6 +1,5 @@
 package com.gu.devenv
 
-import com.gu.devenv.Devenv.{GenerateResult, InitResult}
 import com.gu.devenv.Filesystem.FileSystemStatus
 import fansi.*
 
@@ -37,6 +36,16 @@ object Output {
 
       case GenerateResult.ConfigNotCustomized =>
         buildConfigNotCustomizedMessage()
+    }
+
+  def checkResultMessage(result: CheckResult): String =
+    result match {
+      case CheckResult.Match(userPath, sharedPath) =>
+        buildCheckMatchMessage(userPath, sharedPath)
+      case CheckResult.Mismatch(userMismatch, sharedMismatch, userPath, sharedPath) =>
+        buildCheckMismatchMessage(userMismatch, sharedMismatch, userPath, sharedPath)
+      case CheckResult.NotInitialized =>
+        buildNotInitializedMessage()
     }
 
   // Init message builders (called by initResultMessage)
@@ -110,6 +119,53 @@ object Output {
     "\n\n" + Bold.On("You can now:") + "\n" +
       s"  • Open the project in your IDE and reopen in container\n" +
       s"  • Use the shared config for cloud-based development"
+
+  // Check message builders (called by checkResultMessage)
+
+  private def buildCheckMatchMessage(userPath: String, sharedPath: String): String = {
+    val header  = Bold.On(Color.Green("✓ Configuration is up-to-date"))
+    val divider = Color.Green("━" * 60)
+    val message =
+      s"\n${Color.Green("All devcontainer files match the current configuration.")}\n\n" +
+        "Files checked:\n" +
+        s"  ✓ ${Color.Cyan(userPath)}\n" +
+        s"  ✓ ${Color.Cyan(sharedPath)}"
+
+    s"$header\n$divider$message"
+  }
+
+  private def buildCheckMismatchMessage(
+      userMismatch: Option[FileDiff],
+      sharedMismatch: Option[FileDiff],
+      userPath: String,
+      sharedPath: String
+  ): String = {
+    val header  = Bold.On(Color.Red("✗ Configuration is out-of-date"))
+    val divider = Color.Red("━" * 60)
+
+    val mismatchedFiles = List(
+      userMismatch.map(diff => s"  ✗ ${Color.Cyan(diff.path)}"),
+      sharedMismatch.map(diff => s"  ✗ ${Color.Cyan(diff.path)}")
+    ).flatten.mkString("\n")
+
+    val matchedFiles = List(
+      if (userMismatch.isEmpty) Some(s"  ✓ ${Color.Cyan(userPath)}") else None,
+      if (sharedMismatch.isEmpty) Some(s"  ✓ ${Color.Cyan(sharedPath)}") else None
+    ).flatten.mkString("\n")
+
+    val filesSection = if (matchedFiles.nonEmpty) {
+      s"Files out-of-date:\n$mismatchedFiles\n\nFiles up-to-date:\n$matchedFiles"
+    } else {
+      s"Files out-of-date:\n$mismatchedFiles"
+    }
+
+    val message =
+      s"\n${Color.Yellow("The devcontainer files do not match the current configuration.")}\n\n" +
+        filesSection + "\n\n" +
+        s"Run ${Bold.On(Color.Cyan("devenv generate"))} to update the devcontainer files."
+
+    s"$header\n$divider$message"
+  }
 
   // Shared table builder (called by buildInitTable and buildGenerateTable)
 

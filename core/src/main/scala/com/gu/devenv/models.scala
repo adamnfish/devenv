@@ -1,9 +1,11 @@
 package com.gu.devenv
 
 import io.circe.{Decoder, DecodingFailure, Encoder, Json}
-import cats._
-import cats.syntax.all._
+import cats.*
+import cats.syntax.all.*
+import com.gu.devenv.Filesystem.{FileSystemStatus, GitignoreStatus}
 
+import java.nio.file.Path
 import scala.util.Try
 
 case class ProjectConfig(
@@ -159,4 +161,65 @@ case class Dotfiles(
     repository: String,
     targetPath: String,
     installCommand: String
+)
+
+// Program execution types
+
+case class DevEnvPaths(
+    devcontainerDir: Path,
+    userDir: Path,
+    userDevcontainerFile: Path,
+    sharedDir: Path,
+    sharedDevcontainerFile: Path,
+    gitignoreFile: Path,
+    devenvFile: Path
+)
+
+case class UserConfigPaths(
+    devenvConf: Path
+)
+
+case class InitResult(
+    devcontainerStatus: FileSystemStatus,
+    userStatus: FileSystemStatus,
+    sharedStatus: FileSystemStatus,
+    gitignoreStatus: GitignoreStatus,
+    devenvStatus: FileSystemStatus
+)
+
+sealed trait GenerateResult
+
+object GenerateResult {
+  case class Success(
+      userDevcontainerStatus: FileSystemStatus,
+      sharedDevcontainerStatus: FileSystemStatus
+  ) extends GenerateResult
+
+  case object NotInitialized extends GenerateResult
+
+  case object ConfigNotCustomized extends GenerateResult
+}
+
+sealed trait CheckResult
+
+object CheckResult {
+  case class Match(
+      userPath: String,
+      sharedPath: String
+  ) extends CheckResult
+
+  case class Mismatch(
+      userMismatch: Option[FileDiff],
+      sharedMismatch: Option[FileDiff],
+      userPath: String,
+      sharedPath: String
+  ) extends CheckResult
+
+  case object NotInitialized extends CheckResult
+}
+
+case class FileDiff(
+    path: String,
+    expected: String,
+    actual: String
 )

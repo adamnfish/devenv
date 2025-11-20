@@ -249,6 +249,99 @@ cd /
 rm -rf "$TEMP_DIR"
 
 # ============================================
+# Test 4: Check Command
+# ============================================
+run_test "Check Command - Not Initialized"
+
+TEMP_DIR=$(mktemp -d)
+cd "$TEMP_DIR"
+
+info "Running: devenv check (on uninitialized project)"
+if "$BINARY" check > /dev/null 2>&1; then
+    fail "Check should fail on uninitialized project" "Exit code: 0"
+else
+    pass "Check command failed as expected on uninitialized project"
+fi
+
+# Cleanup
+cd /
+rm -rf "$TEMP_DIR"
+
+# ============================================
+run_test "Check Command - Files Match"
+
+TEMP_DIR=$(mktemp -d)
+cp -r "$SCRIPT_DIR/generate-with-modules/.devcontainer" "$TEMP_DIR/"
+cd "$TEMP_DIR"
+
+info "Generating files first"
+if "$BINARY" generate > /dev/null 2>&1; then
+    pass "Generate command succeeded"
+else
+    fail "Generate command failed" "Exit code: $?"
+fi
+
+info "Running: devenv check (on freshly generated files)"
+if "$BINARY" check > /dev/null 2>&1; then
+    pass "Check command succeeded when files match"
+else
+    fail "Check command failed on matching files" "Exit code: $?"
+fi
+
+# Cleanup
+cd /
+rm -rf "$TEMP_DIR"
+
+# ============================================
+run_test "Check Command - Files Mismatch After Config Change"
+
+TEMP_DIR=$(mktemp -d)
+cp -r "$SCRIPT_DIR/generate-with-modules/.devcontainer" "$TEMP_DIR/"
+cd "$TEMP_DIR"
+
+info "Generating initial files"
+if "$BINARY" generate > /dev/null 2>&1; then
+    pass "Generate command succeeded"
+else
+    fail "Generate command failed" "Exit code: $?"
+fi
+
+info "Modifying devenv.yaml"
+# Change the project name in the config
+sed -i.bak 's/E2E Test Project/Modified Project Name/g' .devcontainer/devenv.yaml
+if grep -q "Modified Project Name" .devcontainer/devenv.yaml; then
+    pass "Config modified successfully"
+else
+    fail "Failed to modify config" ""
+fi
+
+info "Running: devenv check (after config change)"
+if "$BINARY" check > /dev/null 2>&1; then
+    fail "Check should fail when files don't match config" "Exit code: 0"
+else
+    pass "Check command failed as expected when files mismatch"
+fi
+
+# Verify regenerate fixes the mismatch
+info "Regenerating files"
+if "$BINARY" generate > /dev/null 2>&1; then
+    pass "Regenerate succeeded"
+
+    info "Running: devenv check (after regenerate)"
+    if "$BINARY" check > /dev/null 2>&1; then
+        pass "Check succeeded after regenerate"
+    else
+        fail "Check failed after regenerate" "Exit code: $?"
+    fi
+else
+    fail "Regenerate failed" "Exit code: $?"
+fi
+
+# Cleanup
+cd /
+rm -rf "$TEMP_DIR"
+
+# ============================================
 # Test Summary
 # ============================================
 echo ""
