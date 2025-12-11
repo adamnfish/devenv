@@ -132,11 +132,11 @@ The project also includes end-to-end tests. These package the CLI in dev/univers
 
 ### Release
 
-The project uses GitHub Actions to build and publish a native binary macOS ARM64 as a date-based development release.
+The project uses GitHub Actions to build and publish a native binary for macOS ARM64 as a date-based development release.
 
 > [!WARNING]
-> The GitHub actions workflow does not properly sign the MacOS binaries, so the workflow artifact is currently not usable.
-> Building the MacOS binary locally on a Macbook works ok for now, this binary can be uploaded to the draft release in Step 4, below.
+> The GitHub actions workflow does not properly sign the macOS binaries, so the workflow artifact is currently not usable.
+> Building the macOS binary locally on a Macbook works ok for now, this binary can be uploaded to the draft release in Step 4, below.
 
 **Creating a release:**
 
@@ -153,7 +153,7 @@ The project uses GitHub Actions to build and publish a native binary macOS ARM64
 4. **Manually verify and publish the release:**
     - Go to the [Releases page](https://github.com/adamnfish/devenv/releases) on GitHub
     - Review the draft release
-    - (upload a locally-built version of the binary, until we sign MacOS CI builds properly)
+    - (upload a locally-built version of the binary, until we sign macOS CI builds properly)
     - Test the binaries if needed
     - Click "Publish release" when ready
 
