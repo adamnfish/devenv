@@ -53,13 +53,13 @@ object Devenv {
     val userPaths   = Filesystem.resolveUserConfigPaths(userConfigPath)
 
     for {
-      // exit early if the devenv directory does not exist
+      // stop if the devenv directory does not exist
       _ <- exitIf(
         !java.nio.file.Files.exists(devEnvPaths.devenvFile),
         GenerateResult.NotInitialized
       )
       projectConfig <- Config.loadProjectConfig(devEnvPaths.devenvFile).liftF
-      // exit early if the project config has not been configured
+      // stop if the project config has not been configured
       _ <- exitIf(
         projectConfig.name == PLACEHOLDER_PROJECT_NAME,
         GenerateResult.ConfigNotCustomized
@@ -95,13 +95,13 @@ object Devenv {
     val userPaths   = Filesystem.resolveUserConfigPaths(userConfigPath)
 
     for {
-      // exit early if the devenv directory does not exist
+      // stop if the devenv directory does not exist
       _ <- exitIf(
         !java.nio.file.Files.exists(devEnvPaths.devenvFile),
         CheckResult.NotInitialized
       )
       projectConfig <- Config.loadProjectConfig(devEnvPaths.devenvFile).liftF
-      // exit early if the project config has not been configured
+      // stop if the project config has not been configured
       _ <- exitIf(
         projectConfig.name == PLACEHOLDER_PROJECT_NAME,
         CheckResult.NotInitialized
