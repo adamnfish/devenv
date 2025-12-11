@@ -80,17 +80,16 @@ jobs:
           
           **Build Date:** ${{ needs.generate-version.outputs.version }}
           
-          Native binaries for MacOS architectures.
-          
           ⚠️ This is a development release built from the `${{ github.ref_name }}` branch.
           
           ### Installation
           
+          The release includes a native binary for MacOS architectures.
+          
           **macOS (Apple Silicon):**
           ```bash
-          curl -L -o devenv https://github.com/${{ github.repository }}/releases/download/${{ needs.generate-version.outputs.version }}/devenv-${{ needs.generate-version.outputs.version }}-macos-arm64
-          chmod +x devenv
-          sudo mv devenv /usr/local/bin/
+          curl -L -o ~/.local/bin/devenv https://github.com/${{ github.repository }}/releases/download/${{ needs.generate-version.outputs.version }}/devenv-${{ needs.generate-version.outputs.version }}-macos-arm64
+          chmod +x ~/.local/bin/devenv
           ```
         draft: true
         prerelease: true
