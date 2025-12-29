@@ -2,6 +2,7 @@ package com.gu.devenv
 
 import scala.util.{Failure, Success}
 import java.nio.file.Paths
+import fansi.{Bold, Color}
 
 /** Natively compiled tool that wraps the Scala logic in a CLI program.
   */
@@ -11,26 +12,35 @@ object Main {
       case Some("init")     => init()
       case Some("generate") => generate()
       case Some("check")    => check()
+      case Some("help" | "--help" | "-h") =>
+        printUsage()
       case Some(unknown) =>
-        System.err.println(s"Unknown command: $unknown")
+        System.err.println(Color.Red(s"Unknown command: $unknown"))
         printUsage()
         sys.exit(1)
       case None =>
-        System.err.println("No command provided.")
+        System.err.println(Color.Red("No command provided."))
         printUsage()
         sys.exit(1)
     }
 
-  private def printUsage(): Unit =
+  private def printUsage(): Unit = {
+    val header   = Bold.On("Usage:") ++ " devenv " ++ Color.Cyan("<command>")
+    val commands = Bold.On("Commands:")
+    val init     = Bold.On(Color.Cyan("init"))
+    val generate = Bold.On(Color.Cyan("generate"))
+    val check    = Bold.On(Color.Cyan("check"))
+
     println(
-      """Usage: devenv <command>
-        |
-        |Commands:
-        |  init      Initialize .devcontainer directory structure
-        |  generate  Generate devcontainer.json files from .devenv config
-        |  check     Ensure devcontainer.json files match current config
-        |""".stripMargin
+      s"""$header
+         |
+         |$commands
+         |  $init      Initialize .devcontainer directory structure
+         |  $generate  Generate devcontainer.json files from .devenv config
+         |  $check     Ensure devcontainer.json files match current config
+         |""".stripMargin
     )
+  }
 
   /** Sets up a .devcontainer directory with nested subdirectories.
     *
