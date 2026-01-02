@@ -1,10 +1,11 @@
-package com.gu.devenv
+package com.gu.devenv.modules
 
+import com.gu.devenv.*
 import io.circe.Json
-import org.scalatest.TryValues
-import org.scalatest.OptionValues
+import org.scalatest.{OptionValues, TryValues}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+
 import scala.util.Failure
 
 class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionValues {

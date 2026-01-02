@@ -45,7 +45,7 @@ object Utils {
     else
       EitherT.rightT(())
 
-  /** expose liftF on Try, so we don't need to write EitherT.liftF up front on every step.
+  /** Alias liftF onto Try, so we don't need to write EitherT.liftF up front on every step.
     *
     * This way round we have the step's intent up front, and its conversion to EitherT at the end of
     * the line. I prefer this to needing to start every line with EitherT.liftF boilerplate.

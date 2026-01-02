@@ -1,5 +1,6 @@
 package com.gu.devenv
 
+import com.gu.devenv.modules.Modules
 import io.circe.Json
 import io.circe.syntax.*
 import io.circe.JsonObject
@@ -117,12 +118,10 @@ object Config {
       commands.deepMerge(withSecurityOpt).asJson
     }
 
-
-
   def generateConfigs(
-                               projectConfig: ProjectConfig,
-                               maybeUserConfig: Option[UserConfig]
-                             ): Try[(String, String)] = {
+      projectConfig: ProjectConfig,
+      maybeUserConfig: Option[UserConfig]
+  ): Try[(String, String)] = {
     val mergedUserConfig = Config.mergeConfigs(projectConfig, maybeUserConfig)
     for {
       userJson   <- Config.configAsJson(mergedUserConfig)
