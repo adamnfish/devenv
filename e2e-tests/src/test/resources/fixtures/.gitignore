@@ -1,0 +1,6 @@
+# Generated devcontainer.json files (created by devenv generate)
+**/shared/
+**/user/
+
+# Generated .gitignore files (created by devenv init/generate)
+**/.devcontainer/.gitignore
