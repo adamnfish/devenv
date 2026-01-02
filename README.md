@@ -122,12 +122,14 @@ Use sbt to run the unit and integration tests:
 sbt test
 ```
 
-#### E2E Tests
+This includes end-to-end tests in the `e2e-tests` module that create real docker containers and verify devenv's modules and features properly configure the real container environment.
 
-The project also includes end-to-end tests. These package the CLI in dev/universal mode with `sbt stage`, run the program against isolated temp directories, and validate the JSON output and file structure to ensure the CLI behaves correctly in real-world scenarios.
+#### Generation Tests
+
+The project also includes generation tests that validate the real program output. These package the CLI in dev/universal mode with `sbt stage`, run the program against isolated temp directories, and validate the JSON output and file structure to ensure the CLI behaves correctly in real-world scenarios.
 
 ```bash
-./e2e/run-tests.sh
+./generation-tests/run-tests.sh
 ```
 
 ### Release

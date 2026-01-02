@@ -1,0 +1,6 @@
+name: "apt-updates-test"
+
+modules:
+  - apt-updates
+
+image: "mcr.microsoft.com/devcontainers/base:ubuntu"

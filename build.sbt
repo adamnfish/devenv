@@ -27,11 +27,13 @@ val circeVersion = "0.14.15"
 
 val fansiVersion = "0.5.1"
 
+val scalatestVersion = "3.2.19"
+
 lazy val root = (project in file("."))
   .settings(
     name := "devenv"
   )
-  .aggregate(cli, core)
+  .aggregate(cli, core, endToEndTests)
 
 lazy val cli = (project in file("cli"))
   .enablePlugins(JavaAppPackaging, GraalVMNativeImagePlugin)
@@ -77,6 +79,18 @@ lazy val core = project
       "io.circe"      %% "circe-yaml-scalayaml" % "0.16.1",
       "com.lihaoyi"   %% "fansi"                % "0.5.1",
       "org.typelevel" %% "cats-core"            % "2.13.0",
-      "org.scalatest" %% "scalatest"            % "3.2.19" % Test
+      "org.scalatest" %% "scalatest"            % scalatestVersion % Test
     )
   )
+
+lazy val endToEndTests = project
+  .in(file("e2e-tests"))
+  .settings(
+    name := "devenv-e2e-tests",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test
+    ),
+    Test / parallelExecution := true,
+    Test / fork              := true
+  )
+  .dependsOn(core)

@@ -1,0 +1,7 @@
+name: "docker-in-docker-test"
+
+modules:
+  - docker-in-docker
+
+image: "mcr.microsoft.com/devcontainers/base:ubuntu"
+
