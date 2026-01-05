@@ -1,0 +1,5 @@
+# Empty user config for e2e tests
+# This ensures we control all inputs to integration tests via source control
+plugins:
+  intellij: []
+  vscode: []

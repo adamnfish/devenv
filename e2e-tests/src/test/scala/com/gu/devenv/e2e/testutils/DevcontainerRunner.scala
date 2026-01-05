@@ -33,18 +33,12 @@ class DevcontainerRunner(workspaceDir: Path) {
     runHostCommand(s"$devcontainer build --workspace-folder $workspacePath --config $configPath")
 
   /** Starts the devcontainer and returns its ID */
-  def up(): Either[String, String] = {
+  def up(): Either[String, Unit] = {
     val result = runHostCommand(
       s"$devcontainer up --workspace-folder $workspacePath --config $configPath"
     )
     if (result.succeeded) {
-      // Extract container ID from the JSON output
-      // The output format is like: {"outcome":"success","containerId":"abc123",...}
-      val containerIdPattern = """"containerId"\s*:\s*"([^"]+)"""".r
-      containerIdPattern
-        .findFirstMatchIn(result.stdout)
-        .map(_.group(1))
-        .toRight(s"Could not extract container ID from: ${result.stdout}")
+      Right(())
     } else {
       Left(s"Failed to start container: ${result.combinedOutput}")
     }
@@ -72,7 +66,9 @@ class DevcontainerRunner(workspaceDir: Path) {
       val containerId = findResult.stdout.trim
       runHostCommand(s"docker rm -f $containerId")
     } else {
-      CommandResult(0, "", "") // Container might not exist
+      // Container might not exist so this isn't necessarily a failure
+      println(s"Warning: Could not find container to stop for workspace: $workspacePath")
+      CommandResult(0, "", "")
     }
   }
 

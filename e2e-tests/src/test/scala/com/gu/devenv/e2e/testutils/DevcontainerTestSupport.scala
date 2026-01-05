@@ -27,14 +27,19 @@ object ContainerTest extends Tag("com.gu.devenv.e2e.ContainerTest")
   */
 trait DevcontainerTestSupport extends BeforeAndAfterEach { self: Suite =>
 
-  // Path to the fixtures directory
+  // our test fixtures directory
   protected lazy val fixturesDir: Path = {
-    // Find the project root by looking for build.sbt
-    var current = Path.of(System.getProperty("user.dir"))
-    while (current != null && !Files.exists(current.resolve("build.sbt")))
-      current = current.getParent
-    require(current != null, "Could not find project root (build.sbt)")
-    current.resolve("e2e-tests/src/test/resources/fixtures")
+    val resource = getClass.getResource("/fixtures")
+    require(resource != null, "Could not find fixtures directory in resources")
+    Path.of(resource.toURI)
+  }
+
+  // user config fixture directory with empty devenv.yaml
+  // Note: This points to the directory, not the file, because Devenv.generate expects a directory
+  protected lazy val userConfigFixtureDir: Path = {
+    val resource = getClass.getResource("/fixtures/user-config/.config/devenv")
+    require(resource != null, "Could not find user-config fixture directory in resources")
+    Path.of(resource.toURI)
   }
 
   protected var currentWorkspace: Option[Path]            = None
@@ -59,8 +64,8 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach { self: Suite =>
     */
   protected def runDevenvGenerate(workspace: Path): Either[String, GenerateResult.Success] = {
     val devcontainerDir = workspace.resolve(".devcontainer")
-    // This user config path won't exist, but we aren't using it in these e2e tests
-    val userConfigPath = workspace.resolve(".config/devenv/devenv.yaml")
+    // Pass the directory containing devenv.yaml (Filesystem.resolveUserConfigPaths will append the filename)
+    val userConfigPath = userConfigFixtureDir
 
     Devenv.generate(devcontainerDir, userConfigPath) match {
       case scala.util.Success(result: GenerateResult.Success) =>
@@ -92,10 +97,12 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach { self: Suite =>
       return Left(s"Failed to build container: ${buildResult.combinedOutput}")
     }
 
-    // Start the container
-    runner.up().map(_ => runner)
+    runner
+      .up()             // tries to start the container
+      .map(_ => runner) // return the runner on success
   }
 
+  // clean up container and temporary directory
   override protected def afterEach(): Unit = {
     // Stop and clean up container
     currentRunner.foreach { runner =>
@@ -127,7 +134,7 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach { self: Suite =>
     if (Files.exists(path)) {
       Files
         .walk(path)
-        .sorted(java.util.Comparator.reverseOrder())
-        .forEach(Files.delete)
+        .sorted(Ordering[Path].reverse)
+        .forEach(Files.delete(_))
     }
 }

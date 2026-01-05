@@ -10,8 +10,6 @@ ThisBuild / scalacOptions ++= Seq(
   "-Wvalue-discard",
   "-Xfatal-warnings"
 )
-ThisBuild / Test / parallelExecution := true
-ThisBuild / Test / testOptions += Tests.Argument("-oD") // Show test durations
 
 // Fast startup JVM options for short-lived CLI processes
 val cliJvmOptions = Seq(
@@ -23,18 +21,18 @@ val cliJvmOptions = Seq(
   "-Xmx512m"                 // Reasonable max heap
 )
 
-val circeVersion = "0.14.15"
-
-val fansiVersion = "0.5.1"
-
+val circeVersion     = "0.14.15"
+val fansiVersion     = "0.5.1"
 val scalatestVersion = "3.2.19"
 
+// empty root project to aggregate all subprojects
 lazy val root = (project in file("."))
   .settings(
     name := "devenv"
   )
-  .aggregate(cli, core, endToEndTests)
+  .aggregate(cli, core, e2e)
 
+// the packaged CLI application
 lazy val cli = (project in file("cli"))
   .enablePlugins(JavaAppPackaging, GraalVMNativeImagePlugin)
   .settings(
@@ -59,10 +57,6 @@ lazy val cli = (project in file("cli"))
       "-O2",        // Optimize for performance
       "--gc=serial" // Use serial GC (suitable for CLI tools)
     ),
-
-    // Specify GraalVM version for Docker-based builds
-    // Plugin will automatically configure the container
-
     // Output binary name
     GraalVMNativeImage / name := "devenv"
   )
@@ -83,14 +77,14 @@ lazy val core = project
     )
   )
 
-lazy val endToEndTests = project
+lazy val e2e = project
   .in(file("e2e-tests"))
   .settings(
-    name := "devenv-e2e-tests",
+    name := "e2e-tests",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % scalatestVersion % Test
     ),
-    Test / parallelExecution := true,
-    Test / fork              := true
+    // include test duration in feedback for each e2e test
+    Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oD")
   )
   .dependsOn(core)
