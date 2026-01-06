@@ -1,12 +1,15 @@
 package com.gu.devenv.e2e
 
-import com.gu.devenv.e2e.testutils.DevcontainerTestSupport
+import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport, DockerChecker}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.nio.file.Files
 
-/** Quick checks of the testing setup (these don't require Docker)
+/** Sanity checks of the testing setup and Docker availability.
+  *
+  * Run this test suite first to diagnose issues with the test environment before running the full
+  * E2E suite.
   */
 class SanityTest extends AnyFreeSpec with Matchers with DevcontainerTestSupport {
 
@@ -29,6 +32,23 @@ class SanityTest extends AnyFreeSpec with Matchers with DevcontainerTestSupport 
         case Right(_) =>
           Files.exists(workspace.resolve(".devcontainer/shared/devcontainer.json")) shouldBe true
           Files.exists(workspace.resolve(".devcontainer/user/devcontainer.json")) shouldBe true
+      }
+    }
+  }
+
+  "docker availability" - {
+    "docker should be installed and accessible" taggedAs ContainerTest in {
+      DockerChecker.checkDockerAvailable() match {
+        case Left(error) =>
+          fail(
+            s"""Docker is not available. All container tests will fail.
+               |
+               |$error
+               |
+               |Please ensure Docker Desktop is installed and running before running E2E tests.
+               |""".stripMargin
+          )
+        case Right(_) => succeed
       }
     }
   }

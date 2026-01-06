@@ -2,7 +2,7 @@ package com.gu.devenv.e2e.testutils
 
 import com.gu.devenv.e2e.testutils.DevcontainerRunner
 import com.gu.devenv.{Devenv, GenerateResult}
-import org.scalatest.{BeforeAndAfterEach, Suite, Tag}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite, Tag}
 
 import java.nio.file.{Files, Path, StandardCopyOption}
 
@@ -24,8 +24,10 @@ object ContainerTest extends Tag("com.gu.devenv.e2e.ContainerTest")
   *   - Copying fixture directories to temporary workspaces
   *   - Running devenv generate to create devcontainer.json files (using the core library directly)
   *   - Managing container lifecycle (up/down)
+  *
+  * Before running any tests, checks that Docker is available and working.
   */
-trait DevcontainerTestSupport extends BeforeAndAfterEach { self: Suite =>
+trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll { self: Suite =>
 
   // our test fixtures directory
   protected lazy val fixturesDir: Path = {
@@ -44,6 +46,27 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach { self: Suite =>
 
   protected var currentWorkspace: Option[Path]            = None
   protected var currentRunner: Option[DevcontainerRunner] = None
+
+  // Check Docker availability before running any tests in this suite
+  override protected def beforeAll(): Unit = {
+    super.beforeAll()
+    DockerChecker.checkDockerAvailable() match {
+      case Left(error) =>
+        throw new RuntimeException(
+          s"""Docker is not available. Cannot run container tests.
+             |
+             |$error
+             |
+             |Please ensure Docker Desktop is installed and running before running E2E tests.
+             |
+             |You can run the SanityTest suite to diagnose environment issues:
+             |  sbt "endToEndTests/testOnly com.gu.devenv.e2e.SanityTest"
+             |----------------------------------------------------------------------------
+             |""".stripMargin
+        )
+      case Right(_) => // Docker is available, proceed with tests
+    }
+  }
 
   /** Copy a fixture to a temporary directory and return the path */
   protected def setupWorkspace(fixtureName: String): Path = {
@@ -107,7 +130,6 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach { self: Suite =>
     // Stop and clean up container
     currentRunner.foreach { runner =>
       runner.down()
-      runner.cleanupVolumes()
     }
     currentRunner = None
 
