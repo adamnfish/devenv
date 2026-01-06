@@ -17,6 +17,9 @@ jobs:
     - name: Setup Java and sbt
       uses: guardian/setup-scala@v1
 
+    - name: Set up Docker
+      uses: docker/setup-docker-action@v4
+
     - name: Test and package
       run: sbt test cli/universal:packageBin
 
