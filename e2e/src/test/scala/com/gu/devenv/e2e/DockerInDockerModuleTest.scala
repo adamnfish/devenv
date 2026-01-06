@@ -1,5 +1,6 @@
 package com.gu.devenv.e2e
 
+import com.gu.devenv.e2e.assertions.DockerInDockerAssertion
 import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers

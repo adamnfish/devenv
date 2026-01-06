@@ -1,6 +1,6 @@
 package com.gu.devenv.e2e.testutils
 
-import com.gu.devenv.e2e.testutils.DevcontainerRunner
+import com.gu.devenv.e2e.assertions.DockerAssertion
 import com.gu.devenv.{Devenv, GenerateResult}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite, Tag}
 
@@ -55,7 +55,7 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll 
       s"Fixtures directory not found at: $fixturesDir. This indicates a problem with the test resources setup - ensure e2e/src/test/resources/fixtures exists and is properly configured."
     )
 
-    DockerChecker.checkDockerAvailable() match {
+    DockerAssertion.verify() match {
       case Left(error) =>
         throw new RuntimeException(
           s"""Docker is not available. Cannot run container tests.
