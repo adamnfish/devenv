@@ -61,4 +61,3 @@ class DockerInDockerModuleTest extends AnyFreeSpec with Matchers with Devcontain
     }
   }
 }
-

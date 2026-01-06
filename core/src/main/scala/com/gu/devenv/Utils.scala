@@ -9,7 +9,7 @@ import scala.util.Try
   * These allow us to write for-comps that can exit early when a condition is met.
   *
   * We use Try to represent failure throughout the application, and EitherT to handle conditional
-  * early exit from the for-comp, with a result value.
+  * early exit from the for-comprehension, with a result value.
   *
   * Usage:
   *   - Use [[withConditions]] to wrap a for-comprehension that may exit early

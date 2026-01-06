@@ -21,7 +21,9 @@ object Output {
     val table     = buildInitTable(result)
     val nextSteps = buildInitNextSteps()
 
-    table + nextSteps
+    s"""$table
+       |
+       |$nextSteps""".stripMargin
   }
 
   def generateResultMessage(result: GenerateResult): String =
@@ -29,7 +31,9 @@ object Output {
       case GenerateResult.Success(userStatus, sharedStatus) =>
         val table     = buildGenerateTable(userStatus, sharedStatus)
         val nextSteps = buildGenerateNextSteps()
-        table + nextSteps
+        s"""$table
+           |
+           |$nextSteps""".stripMargin
 
       case GenerateResult.NotInitialized =>
         buildNotInitializedMessage()
@@ -65,9 +69,12 @@ object Output {
   }
 
   private def buildInitNextSteps(): String =
-    "\n\n" + Bold.On("Next steps:") + "\n" +
-      s"  1. Edit ${Color.Cyan(".devcontainer/devenv.yaml")} to configure your project\n" +
-      s"  2. Run ${Bold.On(Color.Cyan("devenv generate"))} to create devcontainer files"
+    s"""${Bold.On("Next steps:")}
+       |  1. Edit ${Color.Cyan(".devcontainer/devenv.yaml")} to configure your project
+       |  2. Run ${Bold.On(
+        Color.Cyan("devenv generate")
+      )} to create devcontainer files""".stripMargin
+
   // Generate message builders (called by generateResultMessage)
 
   private def buildGenerateTable(
@@ -91,47 +98,55 @@ object Output {
   private def buildNotInitializedMessage(): String = {
     val header  = Bold.On(Color.Red("Project not initialized"))
     val divider = Color.Red("━" * 60)
-    val message =
-      s"\n${Color.Yellow("The .devcontainer directory has not been initialized.")}\n\n" +
-        "Please complete these steps:\n" +
-        s"  1. Run ${Bold.On(Color.Cyan("devenv init"))} to set up the project structure\n" +
-        s"  2. Edit ${Color.Cyan(".devcontainer/devenv.yaml")} to configure your project\n" +
-        s"  3. Run ${Bold.On(Color.Cyan("devenv generate"))} again to create devcontainer files"
 
-    s"$header\n$divider$message"
+    s"""$header
+       |$divider
+       |${Color.Yellow("The .devcontainer directory has not been initialized.")}
+       |
+       |Please complete these steps:
+       |  1. Run ${Bold.On(Color.Cyan("devenv init"))} to set up the project structure
+       |  2. Edit ${Color.Cyan(".devcontainer/devenv.yaml")} to configure your project
+       |  3. Run ${Bold.On(
+        Color.Cyan("devenv generate")
+      )} again to create devcontainer files""".stripMargin
   }
 
   private def buildConfigNotCustomizedMessage(): String = {
     val header  = Bold.On(Color.Yellow("Configuration not customized"))
     val divider = Color.Yellow("━" * 60)
-    val message =
-      s"\n${Color.Yellow("The devenv.yaml configuration file still contains the placeholder project name.")}\n\n" +
-        s"Please edit ${Color.Cyan(".devcontainer/devenv.yaml")} and change:\n" +
-        s"  ${Bold.On(Color.Red("name: \"CHANGE_ME\""))}\n" +
-        "to:\n" +
-        s"  ${Bold.On(Color.Green("name: \"Your Project Name\""))}\n\n" +
-        s"Then run ${Bold.On(Color.Cyan("devenv generate"))} again."
 
-    s"$header\n$divider$message"
+    s"""$header
+       |$divider
+       |${Color.Yellow(
+        "The devenv.yaml configuration file still contains the placeholder project name."
+      )}
+       |
+       |Please edit ${Color.Cyan(".devcontainer/devenv.yaml")} and change:
+       |  ${Bold.On(Color.Red("name: \"CHANGE_ME\""))}
+       |to:
+       |  ${Bold.On(Color.Green("name: \"Your Project Name\""))}
+       |
+       |Then run ${Bold.On(Color.Cyan("devenv generate"))} again.""".stripMargin
   }
 
   private def buildGenerateNextSteps(): String =
-    "\n\n" + Bold.On("You can now:") + "\n" +
-      s"  • Open the project in your IDE and reopen in container\n" +
-      s"  • Use the shared config for cloud-based development"
+    s"""${Bold.On("You can now:")}
+       |  • Open the project in your IDE and reopen in container
+       |  • Use the shared config for cloud-based development""".stripMargin
 
   // Check message builders (called by checkResultMessage)
 
   private def buildCheckMatchMessage(userPath: String, sharedPath: String): String = {
     val header  = Bold.On(Color.Green("✓ Configuration is up-to-date"))
     val divider = Color.Green("━" * 60)
-    val message =
-      s"\n${Color.Green("All devcontainer files match the current configuration.")}\n\n" +
-        "Files checked:\n" +
-        s"  ✓ ${Color.Cyan(userPath)}\n" +
-        s"  ✓ ${Color.Cyan(sharedPath)}"
 
-    s"$header\n$divider$message"
+    s"""$header
+       |$divider
+       |${Color.Green("All devcontainer files match the current configuration.")}
+       |
+       |Files checked:
+       |  ✓ ${Color.Cyan(userPath)}
+       |  ✓ ${Color.Cyan(sharedPath)}""".stripMargin
   }
 
   private def buildCheckMismatchMessage(
@@ -154,17 +169,25 @@ object Output {
     ).flatten.mkString("\n")
 
     val filesSection = if (matchedFiles.nonEmpty) {
-      s"Files out-of-date:\n$mismatchedFiles\n\nFiles up-to-date:\n$matchedFiles"
+      s"""Files out-of-date:
+         |$mismatchedFiles
+         |
+         |Files up-to-date:
+         |$matchedFiles""".stripMargin
     } else {
-      s"Files out-of-date:\n$mismatchedFiles"
+      s"""Files out-of-date:
+         |$mismatchedFiles""".stripMargin
     }
 
-    val message =
-      s"\n${Color.Yellow("The devcontainer files do not match the current configuration.")}\n\n" +
-        filesSection + "\n\n" +
-        s"Run ${Bold.On(Color.Cyan("devenv generate"))} to update the devcontainer files."
-
-    s"$header\n$divider$message"
+    s"""$header
+       |$divider
+       |${Color.Yellow("The devcontainer files do not match the current configuration.")}
+       |
+       |$filesSection
+       |
+       |Run ${Bold.On(
+        Color.Cyan("devenv generate")
+      )} to update the devcontainer files.""".stripMargin
   }
 
   // Shared table builder (called by buildInitTable and buildGenerateTable)
@@ -184,7 +207,10 @@ object Output {
       }
       .mkString("\n")
 
-    s"$header\n$divider\n$tableRows\n$divider"
+    s"""$header
+       |$divider
+       |$tableRows
+       |$divider""".stripMargin
   }
 
   // Status formatters (low-level helpers called by table builders)
@@ -194,7 +220,8 @@ object Output {
   ): (String, String, Str => Str) = {
     import Filesystem.FileSystemStatus
     status match {
-      case FileSystemStatus.Created => ("✅", "Created", s => Color.Green(s))
+      case FileSystemStatus.Created =>
+        ("✅", "Created", s => Color.Green(s))
       case FileSystemStatus.AlreadyExists =>
         ("⚪", "Already exists", s => Color.LightGray(s))
     }
@@ -205,7 +232,8 @@ object Output {
   ): (String, String, Str => Str) = {
     import Filesystem.GitignoreStatus
     status match {
-      case GitignoreStatus.Created => ("✅", "Created", s => Color.Green(s))
+      case GitignoreStatus.Created =>
+        ("✅", "Created", s => Color.Green(s))
       case GitignoreStatus.AlreadyExistsWithExclusion =>
         ("⚪", "Already exists", s => Color.LightGray(s))
       case GitignoreStatus.Updated =>
@@ -218,7 +246,8 @@ object Output {
   ): (String, String, Str => Str) = {
     import Filesystem.FileSystemStatus
     status match {
-      case FileSystemStatus.Created => ("✅", "Created", s => Color.Green(s))
+      case FileSystemStatus.Created =>
+        ("✅", "Created", s => Color.Green(s))
       case FileSystemStatus.AlreadyExists =>
         ("🔄", "Updated", s => Color.Green(s))
     }

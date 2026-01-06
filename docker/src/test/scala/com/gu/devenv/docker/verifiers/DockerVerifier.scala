@@ -4,8 +4,8 @@ import com.gu.devenv.docker.testutils.CommandRunner
 
 /** Utility to check Docker availability for Docker integration tests.
   *
-  * This checks that Docker is available on the host machine before running
-  * devcontainer tests, which require Docker to create and run containers.
+  * This checks that Docker is available on the host machine before running devcontainer tests,
+  * which require Docker to create and run containers.
   */
 object DockerVerifier {
 
@@ -26,7 +26,9 @@ object DockerVerifier {
     if (dockerExists.succeeded) {
       Right(())
     } else {
-      Left("Docker is not installed or not on PATH. Please install Docker Desktop or Docker Engine.")
+      Left(
+        "Docker is not installed or not on PATH. Please install Docker Desktop or Docker Engine."
+      )
     }
   }
 
@@ -52,4 +54,3 @@ object DockerVerifier {
     }
   }
 }
-

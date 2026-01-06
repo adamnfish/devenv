@@ -50,7 +50,6 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
       result.plugins.vscode should contain allOf ("hverlin.mise-vscode", "existing-vscode")
       result.plugins.intellij should contain allOf ("com.github.l34130.mise", "existing-intellij")
 
-
       // Should add mise mount
       result.mounts should have length 1
       val mount = result.mounts.head.asInstanceOf[Mount.ExplicitMount]
@@ -261,7 +260,10 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
 
       val result = Modules.applyModuleContribution(config, contribution)
 
-      result.remoteEnv should contain allOf (Env("PATH", "/custom/path"), Env("HOME", "/custom/home"))
+      result.remoteEnv should contain allOf (
+        Env("PATH", "/custom/path"),
+        Env("HOME", "/custom/home")
+      )
     }
 
     "prepend postCreateCommands from module contribution" in {
