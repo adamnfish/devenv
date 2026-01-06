@@ -22,7 +22,7 @@ object DockerVerifier {
     } yield ()
 
   private def checkDockerInstalled(): Either[String, Unit] = {
-    val dockerExists = CommandRunner.run("command -v docker")
+    val dockerExists = CommandRunner.run("docker --version")
     if (dockerExists.succeeded) {
       Right(())
     } else {
