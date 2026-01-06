@@ -10,8 +10,9 @@ import com.gu.devenv.docker.testutils.DevcontainerRunner
   *   - Tools from .mise.toml are available on PATH via shims
   */
 object MiseVerifier {
-  // mise is installed to ~/.local/bin which may not be on PATH in exec sessions
-  private val miseBin = "$HOME/.local/bin/mise"
+  // 'mise' should be on the $PATH
+  // replace with install location (`/home/vscode/.local/bin/mise`) for debugging
+  private val miseBin = "mise"
 
   def verify(runner: DevcontainerRunner): Either[String, Unit] =
     for {

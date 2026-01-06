@@ -12,7 +12,6 @@ import java.nio.file.Files
   * Verifies that mise is installed, configured, and tools are available.
   */
 class MiseModuleTest extends AnyFreeSpec with Matchers with DevcontainerTestSupport {
-
   "mise module" - {
     "can set up workspace from fixture" in {
       val workspace = setupWorkspace("mise")
@@ -39,6 +38,7 @@ class MiseModuleTest extends AnyFreeSpec with Matchers with DevcontainerTestSupp
           fail(s"Failed to start container: $error")
 
         case Right(runner) =>
+          // uses the shared mise verifications
           MiseVerifier.verify(runner) match {
             case Left(error) => fail(error)
             case Right(_)    => succeed
@@ -71,6 +71,19 @@ class MiseModuleTest extends AnyFreeSpec with Matchers with DevcontainerTestSupp
           envResult.stdout.trim shouldBe "/mnt/mise-data"
       }
     }
+
+    // replace `ignore` with `in` to enable this test for debugging purposes
+    "debug" taggedAs ContainerTest ignore {
+      val workspace = setupWorkspace("mise")
+
+      startContainer(workspace) match {
+        case Left(error) =>
+          fail(s"Failed to start container: $error")
+
+        case Right(runner) =>
+          val envResult = runner.exec("mise doctor")
+          println(envResult.stdout)
+      }
+    }
   }
 }
-

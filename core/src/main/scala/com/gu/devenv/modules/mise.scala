@@ -23,10 +23,10 @@ private[modules] val mise = ModuleContribution(
       cmd = """bash -c 'set -e && echo -e "\033[1;34m[setup] Setting up mise...\033[0m" && """ +
         // ensure correct ownership of the shared mise data volume
         "sudo chown -R vscode:vscode /mnt/mise-data && " +
-        // install the mise binary (using explicit pipe to sh)
-        """curl -fsSL https://mise.run -o /tmp/mise-install.sh && sh /tmp/mise-install.sh && rm /tmp/mise-install.sh && """ +
-        // add mise to PATH for this session
-        """export PATH="$HOME/.local/bin:$PATH" && """ +
+        // install mise using bash-specific installer (adds activation to ~/.bashrc automatically)
+        // then symlink to /usr/local/bin for system-wide availability across different IDEs
+        """curl -fsSL https://mise.run/bash | sh && """ +
+        """sudo ln -sf /home/vscode/.local/bin/mise /usr/local/bin/mise && """ +
         """mise --version && """ +
         // This enables the repository's config files
         // See: https://mise.jdx.dev/cli/trust.html
