@@ -1,6 +1,6 @@
 package com.gu.devenv.e2e
 
-import com.gu.devenv.e2e.assertions.DockerInDockerAssertion
+import com.gu.devenv.e2e.verifiers.DockerInDockerVerifier
 import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -39,7 +39,7 @@ class DockerInDockerModuleTest extends AnyFreeSpec with Matchers with Devcontain
           fail(s"Failed to start container: $error")
 
         case Right(runner) =>
-          DockerInDockerAssertion.verify(runner) match {
+          DockerInDockerVerifier.verify(runner) match {
             case Left(error) => fail(error)
             case Right(_)    => succeed
           }

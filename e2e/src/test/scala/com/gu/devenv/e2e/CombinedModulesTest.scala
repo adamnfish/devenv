@@ -1,6 +1,6 @@
 package com.gu.devenv.e2e
 
-import com.gu.devenv.e2e.assertions.{AptUpdatesAssertion, DockerInDockerAssertion, MiseAssertion}
+import com.gu.devenv.e2e.verifiers.{AptUpdatesVerifier, DockerInDockerVerifier, MiseVerifier}
 import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -40,9 +40,9 @@ class CombinedModulesTest extends AnyFreeSpec with Matchers with DevcontainerTes
         case Right(runner) =>
           // Verify all modules
           val assertions = List(
-            ("apt-updates", AptUpdatesAssertion.verify(runner)),
-            ("mise", MiseAssertion.verify(runner)),
-            ("docker-in-docker", DockerInDockerAssertion.verify(runner))
+            ("apt-updates", AptUpdatesVerifier.verify(runner)),
+            ("mise", MiseVerifier.verify(runner)),
+            ("docker-in-docker", DockerInDockerVerifier.verify(runner))
           )
 
           val failures = assertions.collect { case (name, Left(error)) =>

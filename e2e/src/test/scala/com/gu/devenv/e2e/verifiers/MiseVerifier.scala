@@ -1,15 +1,15 @@
-package com.gu.devenv.e2e.assertions
+package com.gu.devenv.e2e.verifiers
 
 import com.gu.devenv.e2e.testutils.DevcontainerRunner
 
 /** Verifies that mise module has been installed and configured correctly.
   *
   * Checks:
-  * - mise binary is installed
-  * - mise doctor runs successfully
-  * - Tools from .mise.toml are available on PATH via shims
+  *   - mise binary is installed
+  *   - mise doctor runs successfully
+  *   - Tools from .mise.toml are available on PATH via shims
   */
-object MiseAssertion {
+object MiseVerifier {
   // mise is installed to ~/.local/bin which may not be on PATH in exec sessions
   private val miseBin = "$HOME/.local/bin/mise"
 
@@ -50,4 +50,3 @@ object MiseAssertion {
     }
   }
 }
-

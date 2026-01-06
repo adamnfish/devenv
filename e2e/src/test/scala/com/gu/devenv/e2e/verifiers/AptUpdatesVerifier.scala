@@ -1,4 +1,4 @@
-package com.gu.devenv.e2e.assertions
+package com.gu.devenv.e2e.verifiers
 
 import com.gu.devenv.e2e.testutils.DevcontainerRunner
 
@@ -6,7 +6,7 @@ import com.gu.devenv.e2e.testutils.DevcontainerRunner
   *
   * Checks that no packages are upgradeable after the postCreateCommand has run.
   */
-object AptUpdatesAssertion {
+object AptUpdatesVerifier {
   def verify(runner: DevcontainerRunner): Either[String, Unit] = {
     // Check that there are no upgradeable packages
     // apt-get -s upgrade simulates an upgrade and we count installable packages

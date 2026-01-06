@@ -1,4 +1,4 @@
-package com.gu.devenv.e2e.assertions
+package com.gu.devenv.e2e.verifiers
 
 import com.gu.devenv.e2e.testutils.DevcontainerRunner
 
@@ -9,7 +9,7 @@ import com.gu.devenv.e2e.testutils.DevcontainerRunner
   *   - docker compose is available
   *   - Can run a simple docker compose up
   */
-object DockerInDockerAssertion {
+object DockerInDockerVerifier {
   def verify(runner: DevcontainerRunner): Either[String, Unit] =
     for {
       _ <- checkDockerRunning(runner)

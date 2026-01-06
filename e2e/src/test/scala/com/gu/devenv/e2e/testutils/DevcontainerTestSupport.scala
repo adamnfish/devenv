@@ -1,7 +1,7 @@
 package com.gu.devenv.e2e.testutils
 
-import com.gu.devenv.e2e.assertions.DockerAssertion
 import com.gu.devenv.{Devenv, GenerateResult}
+import com.gu.devenv.e2e.verifiers.DockerVerifier
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite, Tag}
 
 import java.nio.file.{Files, Path, StandardCopyOption}
@@ -22,10 +22,11 @@ object ContainerTest extends Tag("com.gu.devenv.e2e.ContainerTest")
   *
   * Provides utilities for:
   *   - Copying fixture directories to temporary workspaces
-  *   - Running devenv generate to create devcontainer.json files (using the core library directly)
+  *   - Running devenv generate to create devcontainer.json files (using the core devenv library)
   *   - Managing container lifecycle (up/down)
   *
-  * Before running any tests, checks that Docker is available and working.
+  * Also checks that Docker is available and working before the test suite starts. This prevents
+  * noisy duplicate error messages.
   */
 trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll { self: Suite =>
   // the root test fixtures directory, each fixture is found under this
@@ -55,7 +56,8 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll 
       s"Fixtures directory not found at: $fixturesDir. This indicates a problem with the test resources setup - ensure e2e/src/test/resources/fixtures exists and is properly configured."
     )
 
-    DockerAssertion.verify() match {
+    // Check that docker is installed and running
+    DockerVerifier.verify() match {
       case Left(error) =>
         throw new RuntimeException(
           s"""Docker is not available. Cannot run container tests.

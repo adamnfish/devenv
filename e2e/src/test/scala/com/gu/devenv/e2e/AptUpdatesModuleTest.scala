@@ -1,6 +1,6 @@
 package com.gu.devenv.e2e
 
-import com.gu.devenv.e2e.assertions.AptUpdatesAssertion
+import com.gu.devenv.e2e.verifiers.AptUpdatesVerifier
 import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -38,7 +38,7 @@ class AptUpdatesModuleTest extends AnyFreeSpec with Matchers with DevcontainerTe
           fail(s"Failed to start container: $error")
 
         case Right(runner) =>
-          AptUpdatesAssertion.verify(runner) match {
+          AptUpdatesVerifier.verify(runner) match {
             case Left(error) => fail(error)
             case Right(_)    => succeed
           }

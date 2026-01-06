@@ -1,4 +1,4 @@
-package com.gu.devenv.e2e.assertions
+package com.gu.devenv.e2e.verifiers
 
 import com.gu.devenv.e2e.testutils.CommandRunner
 
@@ -7,7 +7,7 @@ import com.gu.devenv.e2e.testutils.CommandRunner
   * This checks that Docker is available on the host machine before running
   * devcontainer tests, which require Docker to create and run containers.
   */
-object DockerAssertion {
+object DockerVerifier {
 
   /** Checks if Docker is installed, running, and working properly.
     *

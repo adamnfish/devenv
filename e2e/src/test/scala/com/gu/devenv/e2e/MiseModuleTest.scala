@@ -1,6 +1,6 @@
 package com.gu.devenv.e2e
 
-import com.gu.devenv.e2e.assertions.MiseAssertion
+import com.gu.devenv.e2e.verifiers.MiseVerifier
 import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -39,7 +39,7 @@ class MiseModuleTest extends AnyFreeSpec with Matchers with DevcontainerTestSupp
           fail(s"Failed to start container: $error")
 
         case Right(runner) =>
-          MiseAssertion.verify(runner) match {
+          MiseVerifier.verify(runner) match {
             case Left(error) => fail(error)
             case Right(_)    => succeed
           }
