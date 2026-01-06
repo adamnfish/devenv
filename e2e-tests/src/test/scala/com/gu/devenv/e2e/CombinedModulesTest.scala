@@ -1,17 +1,17 @@
 package com.gu.devenv.e2e
 
 import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
-import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 /** E2E tests for using multiple modules together.
   *
   * Verifies that all modules work correctly when combined.
   */
-class CombinedModulesSpec extends AnyFunSpec with Matchers with DevcontainerTestSupport {
+class CombinedModulesTest extends AnyFreeSpec with Matchers with DevcontainerTestSupport {
 
-  describe("combined modules") {
-    it("should work with apt-updates, mise, and docker-in-docker together", ContainerTest) {
+  "combined modules" - {
+    "should work with apt-updates, mise, and docker-in-docker together" taggedAs ContainerTest in {
       val workspace = setupWorkspace("combined")
 
       startContainer(workspace) match {

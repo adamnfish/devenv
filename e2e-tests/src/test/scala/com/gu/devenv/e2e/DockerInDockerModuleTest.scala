@@ -1,17 +1,17 @@
 package com.gu.devenv.e2e
 
 import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
-import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 /** E2E tests for the docker-in-docker module.
   *
   * Verifies that Docker and Docker Compose work inside the container.
   */
-class DockerInDockerModuleSpec extends AnyFunSpec with Matchers with DevcontainerTestSupport {
+class DockerInDockerModuleTest extends AnyFreeSpec with Matchers with DevcontainerTestSupport {
 
-  describe("docker-in-docker module") {
-    it("should have a working Docker installation", ContainerTest) {
+  "docker-in-docker module" - {
+    "should have a working Docker installation" taggedAs ContainerTest in {
       val workspace = setupWorkspace("docker-in-docker")
 
       startContainer(workspace) match {
@@ -26,7 +26,7 @@ class DockerInDockerModuleSpec extends AnyFunSpec with Matchers with Devcontaine
       }
     }
 
-    it("should be able to run docker containers", ContainerTest) {
+    "should be able to run docker containers" taggedAs ContainerTest in {
       val workspace = setupWorkspace("docker-in-docker")
 
       startContainer(workspace) match {

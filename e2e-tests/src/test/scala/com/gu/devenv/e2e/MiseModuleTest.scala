@@ -1,17 +1,17 @@
 package com.gu.devenv.e2e
 
 import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
-import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 /** E2E tests for the mise module.
   *
   * Verifies that mise is installed, configured, and tools are available.
   */
-class MiseModuleSpec extends AnyFunSpec with Matchers with DevcontainerTestSupport {
+class MiseModuleTest extends AnyFreeSpec with Matchers with DevcontainerTestSupport {
 
-  describe("mise module") {
-    it("should install mise and make tools available", ContainerTest) {
+  "mise module" - {
+    "should install mise and make tools available" taggedAs ContainerTest in {
       val workspace = setupWorkspace("mise")
 
       startContainer(workspace) match {
@@ -26,7 +26,7 @@ class MiseModuleSpec extends AnyFunSpec with Matchers with DevcontainerTestSuppo
       }
     }
 
-    it("should have mise shims on the PATH", ContainerTest) {
+    "should have mise shims on the PATH" taggedAs ContainerTest in {
       val workspace = setupWorkspace("mise")
 
       startContainer(workspace) match {
@@ -39,7 +39,7 @@ class MiseModuleSpec extends AnyFunSpec with Matchers with DevcontainerTestSuppo
       }
     }
 
-    it("should have MISE_DATA_DIR set correctly", ContainerTest) {
+    "should have MISE_DATA_DIR set correctly" taggedAs ContainerTest in {
       val workspace = setupWorkspace("mise")
 
       startContainer(workspace) match {

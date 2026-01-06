@@ -1,17 +1,17 @@
 package com.gu.devenv.e2e
 
 import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
-import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 /** E2E tests for the apt-updates module.
   *
   * Verifies that after container creation, all apt packages are up-to-date.
   */
-class AptUpdatesModuleSpec extends AnyFunSpec with Matchers with DevcontainerTestSupport {
+class AptUpdatesModuleTest extends AnyFreeSpec with Matchers with DevcontainerTestSupport {
 
-  describe("apt-updates module") {
-    it("should leave no upgradeable packages after container creation", ContainerTest) {
+  "apt-updates module" - {
+    "should leave no upgradeable packages after container creation" taggedAs ContainerTest in {
       val workspace = setupWorkspace("apt-updates")
 
       startContainer(workspace) match {
