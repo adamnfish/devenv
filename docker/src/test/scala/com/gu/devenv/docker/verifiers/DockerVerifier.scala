@@ -1,8 +1,8 @@
-package com.gu.devenv.e2e.verifiers
+package com.gu.devenv.docker.verifiers
 
-import com.gu.devenv.e2e.testutils.CommandRunner
+import com.gu.devenv.docker.testutils.CommandRunner
 
-/** Utility to check Docker availability for E2E tests.
+/** Utility to check Docker availability for Docker integration tests.
   *
   * This checks that Docker is available on the host machine before running
   * devcontainer tests, which require Docker to create and run containers.

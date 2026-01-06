@@ -1,13 +1,13 @@
-package com.gu.devenv.e2e
+package com.gu.devenv.docker
 
-import com.gu.devenv.e2e.verifiers.AptUpdatesVerifier
-import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
+import com.gu.devenv.docker.verifiers.AptUpdatesVerifier
+import com.gu.devenv.docker.testutils.{ContainerTest, DevcontainerTestSupport}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.nio.file.Files
 
-/** E2E tests for the apt-updates module.
+/** Docker integration tests for the apt-updates module.
   *
   * Verifies that after container creation, all apt packages are up-to-date.
   */

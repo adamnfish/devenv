@@ -1,13 +1,13 @@
-package com.gu.devenv.e2e
+package com.gu.devenv.docker
 
-import com.gu.devenv.e2e.verifiers.DockerInDockerVerifier
-import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
+import com.gu.devenv.docker.verifiers.DockerInDockerVerifier
+import com.gu.devenv.docker.testutils.{ContainerTest, DevcontainerTestSupport}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.nio.file.Files
 
-/** E2E tests for the docker-in-docker module.
+/** Docker integration tests for the docker-in-docker module.
   *
   * Verifies that Docker and Docker Compose work inside the container.
   */

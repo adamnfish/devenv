@@ -1,7 +1,7 @@
-package com.gu.devenv.e2e.testutils
+package com.gu.devenv.docker.testutils
 
 import com.gu.devenv.{Devenv, GenerateResult}
-import com.gu.devenv.e2e.verifiers.DockerVerifier
+import com.gu.devenv.docker.verifiers.DockerVerifier
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite, Tag}
 
 import java.nio.file.{Files, Path, StandardCopyOption}
@@ -10,13 +10,13 @@ import java.nio.file.{Files, Path, StandardCopyOption}
   *
   * Use this to filter tests when you want to skip the slow container tests:
   *
-  * sbt "endToEndTests/testOnly -- -l com.gu.devenv.e2e.ContainerTest"
+  * sbt "docker/testOnly -- -l com.gu.devenv.docker.ContainerTest"
   *
   * Or to run only container tests:
   *
-  * sbt "endToEndTests/testOnly -- -n com.gu.devenv.e2e.ContainerTest"
+  * sbt "docker/testOnly -- -n com.gu.devenv.docker.ContainerTest"
   */
-object ContainerTest extends Tag("com.gu.devenv.e2e.ContainerTest")
+object ContainerTest extends Tag("com.gu.devenv.docker.ContainerTest")
 
 /** Test helper trait that manages workspace setup, devcontainer generation, and cleanup.
   *
@@ -64,7 +64,7 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll 
              |
              |$error
              |
-             |Please ensure Docker Desktop is installed and running before running E2E tests.
+             |Please ensure Docker Desktop is installed and running before running Docker integration tests.
              |----------------------------------------------------------------------------
              |""".stripMargin
         )
@@ -77,7 +77,7 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll 
     val fixtureDir = fixturesDir.resolve(fixtureName)
     require(Files.isDirectory(fixtureDir), s"Fixture not found: $fixtureDir")
 
-    val tempDir = Files.createTempDirectory(s"devenv-e2e-$fixtureName-")
+    val tempDir = Files.createTempDirectory(s"devenv-docker-$fixtureName-")
     copyDirectory(fixtureDir, tempDir)
 
     currentWorkspace = Some(tempDir)

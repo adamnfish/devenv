@@ -30,7 +30,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "devenv"
   )
-  .aggregate(cli, core, e2e)
+  .aggregate(cli, core, docker)
 
 // the packaged CLI application
 lazy val cli = (project in file("cli"))
@@ -77,13 +77,13 @@ lazy val core = project
     )
   )
 
-lazy val e2e = project
-  .in(file("e2e"))
+lazy val docker = project
+  .in(file("docker"))
   .settings(
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % scalatestVersion % Test
     ),
-    // include test duration in feedback for each e2e test
+    // include test duration in feedback for each docker test
     Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oD")
   )
   .dependsOn(core)

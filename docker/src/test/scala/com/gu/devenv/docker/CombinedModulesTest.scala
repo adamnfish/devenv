@@ -1,13 +1,13 @@
-package com.gu.devenv.e2e
+package com.gu.devenv.docker
 
-import com.gu.devenv.e2e.verifiers.{AptUpdatesVerifier, DockerInDockerVerifier, MiseVerifier}
-import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
+import com.gu.devenv.docker.verifiers.{AptUpdatesVerifier, DockerInDockerVerifier, MiseVerifier}
+import com.gu.devenv.docker.testutils.{ContainerTest, DevcontainerTestSupport}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.nio.file.Files
 
-/** E2E tests for using multiple modules together.
+/** Docker integration tests for using multiple modules together.
   *
   * Verifies that all modules work correctly when combined.
   */

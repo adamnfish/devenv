@@ -1,13 +1,13 @@
-package com.gu.devenv.e2e
+package com.gu.devenv.docker
 
-import com.gu.devenv.e2e.verifiers.MiseVerifier
-import com.gu.devenv.e2e.testutils.{ContainerTest, DevcontainerTestSupport}
+import com.gu.devenv.docker.verifiers.MiseVerifier
+import com.gu.devenv.docker.testutils.{ContainerTest, DevcontainerTestSupport}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.nio.file.Files
 
-/** E2E tests for the mise module.
+/** Docker integration tests for the mise module.
   *
   * Verifies that mise is installed, configured, and tools are available.
   */

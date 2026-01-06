@@ -1,6 +1,6 @@
-package com.gu.devenv.e2e.verifiers
+package com.gu.devenv.docker.verifiers
 
-import com.gu.devenv.e2e.testutils.DevcontainerRunner
+import com.gu.devenv.docker.testutils.DevcontainerRunner
 
 /** Verifies that apt-updates module has run successfully.
   *

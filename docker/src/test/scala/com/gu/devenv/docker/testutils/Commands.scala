@@ -1,4 +1,4 @@
-package com.gu.devenv.e2e.testutils
+package com.gu.devenv.docker.testutils
 
 import scala.sys.process.*
 
