@@ -28,8 +28,7 @@ object ContainerTest extends Tag("com.gu.devenv.e2e.ContainerTest")
   * Before running any tests, checks that Docker is available and working.
   */
 trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll { self: Suite =>
-
-  // our test fixtures directory
+  // the root test fixtures directory, each fixture is found under this
   protected lazy val fixturesDir: Path = {
     val resource = getClass.getResource("/fixtures")
     require(resource != null, "Could not find fixtures directory in resources")
@@ -37,7 +36,6 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll 
   }
 
   // user config fixture directory with empty devenv.yaml
-  // Note: This points to the directory, not the file, because Devenv.generate expects a directory
   protected lazy val userConfigFixtureDir: Path = {
     val resource = getClass.getResource("/fixtures/user-config/.config/devenv")
     require(resource != null, "Could not find user-config fixture directory in resources")
@@ -47,9 +45,16 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll 
   protected var currentWorkspace: Option[Path]            = None
   protected var currentRunner: Option[DevcontainerRunner] = None
 
-  // Check Docker availability before running any tests in this suite
+  // Check Docker availability and fixtures before running any tests in this suite
   override protected def beforeAll(): Unit = {
     super.beforeAll()
+
+    // Check that we can find the fixtures directory
+    require(
+      Files.isDirectory(fixturesDir),
+      s"Fixtures directory not found at: $fixturesDir. This indicates a problem with the test resources setup - ensure e2e/src/test/resources/fixtures exists and is properly configured."
+    )
+
     DockerChecker.checkDockerAvailable() match {
       case Left(error) =>
         throw new RuntimeException(
@@ -58,9 +63,6 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll 
              |$error
              |
              |Please ensure Docker Desktop is installed and running before running E2E tests.
-             |
-             |You can run the SanityTest suite to diagnose environment issues:
-             |  sbt "endToEndTests/testOnly com.gu.devenv.e2e.SanityTest"
              |----------------------------------------------------------------------------
              |""".stripMargin
         )

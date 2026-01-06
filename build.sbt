@@ -78,9 +78,8 @@ lazy val core = project
   )
 
 lazy val e2e = project
-  .in(file("e2e-tests"))
+  .in(file("e2e"))
   .settings(
-    name := "e2e-tests",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % scalatestVersion % Test
     ),
