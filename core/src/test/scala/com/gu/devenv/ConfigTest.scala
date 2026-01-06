@@ -68,9 +68,11 @@ class ConfigTest
       Config.parseUserConfig(exampleConfig).success
 
     userConfig should have(
-      "plugins" as Plugins(
-        List("com.github.copilot", "com.github.gtache.lsp"),
-        List("GitHub.copilot")
+      "plugins" as Some(
+        Plugins(
+          List("com.github.copilot", "com.github.gtache.lsp"),
+          List("GitHub.copilot")
+        )
       ),
       "dotfiles" as Some(
         Dotfiles(

@@ -177,11 +177,11 @@ object Config {
 
   private def applyPlugins(
       projectPlugins: Plugins,
-      userPlugins: Plugins
+      userPlugins: Option[Plugins]
   ): Plugins =
     Plugins(
-      intellij = (projectPlugins.intellij ++ userPlugins.intellij).distinct,
-      vscode = (projectPlugins.vscode ++ userPlugins.vscode).distinct
+      intellij = (projectPlugins.intellij ++ userPlugins.fold(Nil)(_.intellij)).distinct,
+      vscode = (projectPlugins.vscode ++ userPlugins.fold(Nil)(_.vscode)).distinct
     )
 
   private def applyDotfiles(dotfiles: Dotfiles): List[Command] = {

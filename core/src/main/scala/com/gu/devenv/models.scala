@@ -27,7 +27,7 @@ case class ProjectConfig(
 )
 
 case class UserConfig(
-    plugins: Plugins,
+    plugins: Option[Plugins],
     dotfiles: Option[Dotfiles]
 )
 
