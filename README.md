@@ -122,7 +122,9 @@ Use sbt to run the unit and integration tests:
 sbt test
 ```
 
-This includes end-to-end tests in the `e2e-tests` module that create real docker containers and verify devenv's modules and features properly configure the real container environment.
+#### Docker Integration Tests
+
+Docker tests validate modules by creating real Docker containers and verifying configuration. **Docker must be running** to execute these tests. See [Docker Testing Documentation](docs/docker-testing.md) for details.
 
 #### Generation Tests
 
