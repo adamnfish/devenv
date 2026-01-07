@@ -48,13 +48,16 @@ jobs:
         path: ${{ steps.find-package.outputs.package_file }}
         retention-days: 30
 
-    - name: Run E2E tests
+    - name: Extract packaged app binary
       run: |
-        # Extract and test the packaged binary
         PACKAGE_FILE="${{ steps.find-package.outputs.package_file }}"
         PACKAGE_DIR=$(basename "$PACKAGE_FILE" .zip)
         unzip -q "$PACKAGE_FILE" -d .
-        export PATH="$(pwd)/$PACKAGE_DIR/bin:$PATH"
-        cd e2e
-        ./run-tests.sh
+        echo "DEVENV_BIN=$(pwd)/$PACKAGE_DIR/bin/devenv" >> $GITHUB_ENV
+
+    - name: Run generation tests
+      working-directory: generation-tests
+      env:
+        DEVENV_BIN: ${{ env.DEVENV_BIN }}
+      run: ./run-tests.sh
 

@@ -16,7 +16,13 @@ TESTS_FAILED=0
 # Get the project root (parent of generation-tests directory)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-BINARY="$PROJECT_ROOT/cli/target/universal/stage/bin/devenv"
+
+# Use DEVENV_BIN if set (for CI), otherwise use local staged binary
+if [ -n "$DEVENV_BIN" ]; then
+    BINARY="$DEVENV_BIN"
+else
+    BINARY="$PROJECT_ROOT/cli/target/universal/stage/bin/devenv"
+fi
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}  devenv generation test suite${NC}"
@@ -47,14 +53,18 @@ run_test() {
     echo -e "${YELLOW}Test: ${test_name}${NC}"
 }
 
-# Build the project
-echo -e "${BLUE}Building project...${NC}"
-cd "$PROJECT_ROOT"
-if sbt "cli/stage" > /dev/null 2>&1; then
-    pass "Project built successfully"
+# Build the project if using local binary
+if [ -z "$DEVENV_BIN" ]; then
+    echo -e "${BLUE}Building project...${NC}"
+    cd "$PROJECT_ROOT"
+    if sbt "cli/stage" > /dev/null 2>&1; then
+        pass "Project built successfully"
+    else
+        echo -e "${RED}Failed to build project${NC}"
+        exit 1
+    fi
 else
-    echo -e "${RED}Failed to build project${NC}"
-    exit 1
+    info "Using provided binary: $BINARY"
 fi
 
 # Verify binary exists
