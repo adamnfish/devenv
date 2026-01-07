@@ -1,5 +1,5 @@
-# Test project configuration for E2E testing
-name: "E2E Test Project"
+# Test project configuration for generation testing
+name: "Generation Test Project"
 
 modules:
   - apt-updates

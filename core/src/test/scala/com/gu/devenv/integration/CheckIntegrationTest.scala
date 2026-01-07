@@ -10,7 +10,6 @@ import org.scalatest.matchers.should.Matchers
 import java.nio.file.Files
 
 class CheckIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
-
   "check" - {
     "checking an uninitialized directory" - {
       "should return NotInitialized result" in withTempDirs { (tempDir, userConfigDir) =>
@@ -51,7 +50,9 @@ class CheckIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
             userMismatch shouldBe defined
             sharedMismatch shouldBe defined
           case CheckResult.Match(_, _) =>
-            fail("Expected Mismatch result but got Match (files should not match when they don't exist)")
+            fail(
+              "Expected Mismatch result but got Match (files should not match when they don't exist)"
+            )
           case CheckResult.NotInitialized =>
             fail("Expected Mismatch result but got NotInitialized")
         }
@@ -95,7 +96,9 @@ class CheckIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         result match {
           case CheckResult.Match(_, _) => succeed
           case CheckResult.Mismatch(userMismatch, sharedMismatch, _, _) =>
-            fail(s"Expected Match result but got Mismatch (user: ${userMismatch.isDefined}, shared: ${sharedMismatch.isDefined})")
+            fail(
+              s"Expected Match result but got Mismatch (user: ${userMismatch.isDefined}, shared: ${sharedMismatch.isDefined})"
+            )
           case CheckResult.NotInitialized =>
             fail("Expected Match result but got NotInitialized")
         }
@@ -116,7 +119,9 @@ class CheckIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
             userPath shouldBe ".devcontainer/user/devcontainer.json"
             sharedPath shouldBe ".devcontainer/shared/devcontainer.json"
           case CheckResult.Mismatch(userMismatch, sharedMismatch, _, _) =>
-            fail(s"Expected Match result but got Mismatch (user: ${userMismatch.isDefined}, shared: ${sharedMismatch.isDefined})")
+            fail(
+              s"Expected Match result but got Mismatch (user: ${userMismatch.isDefined}, shared: ${sharedMismatch.isDefined})"
+            )
           case CheckResult.NotInitialized =>
             fail("Expected Match result but got NotInitialized")
         }
@@ -297,7 +302,9 @@ class CheckIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         result match {
           case CheckResult.Match(_, _) => succeed
           case CheckResult.Mismatch(userMismatch, sharedMismatch, _, _) =>
-            fail(s"Expected Match result but got Mismatch after regenerating (user: ${userMismatch.isDefined}, shared: ${sharedMismatch.isDefined})")
+            fail(
+              s"Expected Match result but got Mismatch after regenerating (user: ${userMismatch.isDefined}, shared: ${sharedMismatch.isDefined})"
+            )
           case CheckResult.NotInitialized =>
             fail("Expected Match result but got NotInitialized")
         }
@@ -323,42 +330,44 @@ class CheckIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         result match {
           case CheckResult.Match(_, _) => succeed
           case CheckResult.Mismatch(userMismatch, sharedMismatch, _, _) =>
-            fail(s"Expected Match result but got Mismatch with user config (user: ${userMismatch.isDefined}, shared: ${sharedMismatch.isDefined})")
+            fail(
+              s"Expected Match result but got Mismatch with user config (user: ${userMismatch.isDefined}, shared: ${sharedMismatch.isDefined})"
+            )
           case CheckResult.NotInitialized =>
             fail("Expected Match result but got NotInitialized")
         }
       }
 
-      "should detect mismatch when user config changes" in withTempDirs { (tempDir, userConfigDir) =>
-        val devcontainerDir = tempDir.resolve(".devcontainer")
+      "should detect mismatch when user config changes" in withTempDirs {
+        (tempDir, userConfigDir) =>
+          val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        // Generate with one user config
-        val userDevenvFile = userConfigDir.resolve("devenv.yaml")
-        Files.writeString(userDevenvFile, userConfigWithPlugins)
+          // Generate with one user config
+          val userDevenvFile = userConfigDir.resolve("devenv.yaml")
+          Files.writeString(userDevenvFile, userConfigWithPlugins)
 
-        Devenv.init(devcontainerDir).success.value
-        val devenvFile = devcontainerDir.resolve("devenv.yaml")
-        Files.writeString(devenvFile, basicProjectConfig)
-        Devenv.generate(devcontainerDir, userConfigDir).success.value
+          Devenv.init(devcontainerDir).success.value
+          val devenvFile = devcontainerDir.resolve("devenv.yaml")
+          Files.writeString(devenvFile, basicProjectConfig)
+          Devenv.generate(devcontainerDir, userConfigDir).success.value
 
-        // Change user config
-        Files.writeString(userDevenvFile, userConfigWithDotfiles)
+          // Change user config
+          Files.writeString(userDevenvFile, userConfigWithDotfiles)
 
-        val result = Devenv.check(devcontainerDir, userConfigDir).success.value
+          val result = Devenv.check(devcontainerDir, userConfigDir).success.value
 
-        result match {
-          case CheckResult.Mismatch(userMismatch, sharedMismatch, _, _) =>
-            // User file should differ due to changed user config
-            userMismatch shouldBe defined
-            // Shared file should still match (user config doesn't affect it)
-            sharedMismatch shouldBe None
-          case CheckResult.Match(_, _) =>
-            fail("Expected Mismatch result but got Match (user config was changed)")
-          case CheckResult.NotInitialized =>
-            fail("Expected Mismatch result but got NotInitialized")
-        }
+          result match {
+            case CheckResult.Mismatch(userMismatch, sharedMismatch, _, _) =>
+              // User file should differ due to changed user config
+              userMismatch shouldBe defined
+              // Shared file should still match (user config doesn't affect it)
+              sharedMismatch shouldBe None
+            case CheckResult.Match(_, _) =>
+              fail("Expected Mismatch result but got Match (user config was changed)")
+            case CheckResult.NotInitialized =>
+              fail("Expected Mismatch result but got NotInitialized")
+          }
       }
     }
   }
 }
-

@@ -122,12 +122,16 @@ Use sbt to run the unit and integration tests:
 sbt test
 ```
 
-#### E2E Tests
+#### Docker Integration Tests
 
-The project also includes end-to-end tests. These package the CLI in dev/universal mode with `sbt stage`, run the program against isolated temp directories, and validate the JSON output and file structure to ensure the CLI behaves correctly in real-world scenarios.
+Docker tests validate modules by creating real Docker containers and verifying configuration. **Docker must be running** to execute these tests. See [Docker Testing Documentation](docs/docker-testing.md) for details.
+
+#### Generation Tests
+
+The project also includes generation tests that validate the real program output. These package the CLI in dev/universal mode with `sbt stage`, run the program against isolated temp directories, and validate the JSON output and file structure to ensure the CLI behaves correctly in real-world scenarios.
 
 ```bash
-./e2e/run-tests.sh
+./generation-tests/run-tests.sh
 ```
 
 ### Release

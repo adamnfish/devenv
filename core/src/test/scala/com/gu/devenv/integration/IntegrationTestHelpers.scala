@@ -4,7 +4,6 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters._
 
 object IntegrationTestHelpers {
-
   // Helper functions for temporary directory management
 
   def withTempDir[A](test: Path => A): A = {

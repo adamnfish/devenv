@@ -10,8 +10,6 @@ ThisBuild / scalacOptions ++= Seq(
   "-Wvalue-discard",
   "-Xfatal-warnings"
 )
-ThisBuild / Test / parallelExecution := true
-ThisBuild / Test / testOptions += Tests.Argument("-oD") // Show test durations
 
 // Fast startup JVM options for short-lived CLI processes
 val cliJvmOptions = Seq(
@@ -23,16 +21,18 @@ val cliJvmOptions = Seq(
   "-Xmx512m"                 // Reasonable max heap
 )
 
-val circeVersion = "0.14.15"
+val circeVersion     = "0.14.15"
+val fansiVersion     = "0.5.1"
+val scalatestVersion = "3.2.19"
 
-val fansiVersion = "0.5.1"
-
+// empty root project to aggregate all subprojects
 lazy val root = (project in file("."))
   .settings(
     name := "devenv"
   )
-  .aggregate(cli, core)
+  .aggregate(cli, core, docker)
 
+// the packaged CLI application
 lazy val cli = (project in file("cli"))
   .enablePlugins(JavaAppPackaging, GraalVMNativeImagePlugin)
   .settings(
@@ -57,10 +57,6 @@ lazy val cli = (project in file("cli"))
       "-O2",        // Optimize for performance
       "--gc=serial" // Use serial GC (suitable for CLI tools)
     ),
-
-    // Specify GraalVM version for Docker-based builds
-    // Plugin will automatically configure the container
-
     // Output binary name
     GraalVMNativeImage / name := "devenv"
   )
@@ -77,6 +73,17 @@ lazy val core = project
       "io.circe"      %% "circe-yaml-scalayaml" % "0.16.1",
       "com.lihaoyi"   %% "fansi"                % "0.5.1",
       "org.typelevel" %% "cats-core"            % "2.13.0",
-      "org.scalatest" %% "scalatest"            % "3.2.19" % Test
+      "org.scalatest" %% "scalatest"            % scalatestVersion % Test
     )
   )
+
+lazy val docker = project
+  .in(file("docker"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test
+    ),
+    // include test duration in feedback for each docker test
+    Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oD")
+  )
+  .dependsOn(core)

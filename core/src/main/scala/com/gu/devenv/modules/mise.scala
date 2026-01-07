@@ -20,17 +20,19 @@ private[modules] val mise = ModuleContribution(
    */
   postCreateCommands = List(
     Command(
-      cmd = """bash -c 'echo -e "\033[1;34m[setup] Setting up mise...\033[0m" && """ +
+      cmd = """bash -c 'set -e && echo -e "\033[1;34m[setup] Setting up mise...\033[0m" && """ +
         // ensure correct ownership of the shared mise data volume
         "sudo chown -R vscode:vscode /mnt/mise-data && " +
-        // install the mise binary
-        """curl https://mise.run | sh && """ +
+        // install mise using bash-specific installer (adds activation to ~/.bashrc automatically)
+        // then symlink to /usr/local/bin for system-wide availability across different IDEs
+        """curl -fsSL https://mise.run/bash | sh && """ +
+        """sudo ln -sf /home/vscode/.local/bin/mise /usr/local/bin/mise && """ +
         """mise --version && """ +
         // This enables the repository's config files
         // See: https://mise.jdx.dev/cli/trust.html
-        """mise trust || true && """ +
+        """mise trust --yes || true && """ +
         // do a mise install and print a warning if it fails
-        """mise install || echo -e "\033[1;33m[setup] mise install failed. You may need to run `mise install` manually inside the container.\033[0m" && """ +
+        """(mise install || echo -e "\033[1;33m[setup] mise install failed. You may need to run mise install manually inside the container.\033[0m") && """ +
         // Make sure mise is active after installation
         "mise doctor && " +
         """echo -e "\033[1;32m[setup] mise setup complete.\033[0m"'""",
@@ -53,6 +55,7 @@ private[modules] val mise = ModuleContribution(
    */
   mounts = List(
     Mount.ExplicitMount(
+      // TODO: parameterize volume name so we can run test cleanups in parallel and without destroying user volumes
       source = "docker-mise-data-volume",
       target = "/mnt/mise-data",
       `type` = "volume"

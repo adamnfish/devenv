@@ -40,9 +40,10 @@ object Filesystem {
     new String(bytes, java.nio.charset.StandardCharsets.UTF_8)
   }
 
-  /** Updates a file by overwriting its content, or creates it if it doesn't exist. Use this for
-    * files that should be regenerated on each run (e.g., devcontainer.json). Do NOT use this for
-    * init behavior where existing files should be preserved.
+  /** Updates a file by overwriting its content, or creates it if it doesn't exist.
+    *
+    * Use this for files that should be regenerated on each run (e.g., devcontainer.json). Do NOT
+    * use this for init behavior where existing files should be preserved.
     */
   def updateFile(path: Path, content: String): Try[FileSystemStatus] = Try {
     val exists = Files.exists(path)

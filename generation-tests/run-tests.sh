@@ -13,13 +13,19 @@ TESTS_RUN=0
 TESTS_PASSED=0
 TESTS_FAILED=0
 
-# Get the project root (parent of e2e)
+# Get the project root (parent of generation-tests directory)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-BINARY="$PROJECT_ROOT/cli/target/universal/stage/bin/devenv"
+
+# Use DEVENV_BIN if set (for CI), otherwise use local staged binary
+if [ -n "$DEVENV_BIN" ]; then
+    BINARY="$DEVENV_BIN"
+else
+    BINARY="$PROJECT_ROOT/cli/target/universal/stage/bin/devenv"
+fi
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}  devenv E2E Test Suite${NC}"
+echo -e "${BLUE}  devenv generation test suite${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
@@ -47,14 +53,18 @@ run_test() {
     echo -e "${YELLOW}Test: ${test_name}${NC}"
 }
 
-# Build the project
-echo -e "${BLUE}Building project...${NC}"
-cd "$PROJECT_ROOT"
-if sbt "cli/stage" > /dev/null 2>&1; then
-    pass "Project built successfully"
+# Build the project if using local binary
+if [ -z "$DEVENV_BIN" ]; then
+    echo -e "${BLUE}Building project...${NC}"
+    cd "$PROJECT_ROOT"
+    if sbt "cli/stage" > /dev/null 2>&1; then
+        pass "Project built successfully"
+    else
+        echo -e "${RED}Failed to build project${NC}"
+        exit 1
+    fi
 else
-    echo -e "${RED}Failed to build project${NC}"
-    exit 1
+    info "Using provided binary: $BINARY"
 fi
 
 # Verify binary exists
@@ -160,7 +170,7 @@ if [ -f ".devcontainer/user/devcontainer.json" ]; then
     fi
 
     # Check for project content
-    if grep -q "E2E Test Project" ".devcontainer/user/devcontainer.json"; then
+    if grep -q "Generation Test Project" ".devcontainer/user/devcontainer.json"; then
         pass "Project name present in user config"
     else
         fail "Project name missing from user config" ""
@@ -308,7 +318,7 @@ fi
 
 info "Modifying devenv.yaml"
 # Change the project name in the config
-sed -i.bak 's/E2E Test Project/Modified Project Name/g' .devcontainer/devenv.yaml
+sed -i.bak 's/Generation Test Project/Modified Project Name/g' .devcontainer/devenv.yaml
 if grep -q "Modified Project Name" .devcontainer/devenv.yaml; then
     pass "Config modified successfully"
 else

@@ -10,7 +10,6 @@ import org.scalatest.matchers.should.Matchers
 import java.nio.file.Files
 
 class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
-
   "init" - {
     "initializing an empty (non-existent) directory" - {
       "should create all required directories and files" in withTempDir { tempDir =>
