@@ -17,8 +17,14 @@ jobs:
     - name: Setup Java and sbt
       uses: guardian/setup-scala@v1
 
+    # Required by the docker tests
     - name: Set up Docker
       uses: docker/setup-docker-action@v4
+
+    # The docker tests use `npx` to execute the devcontainers-cli package
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24
 
     - name: Test and package
       run: sbt test cli/universal:packageBin
