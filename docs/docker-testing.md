@@ -37,3 +37,9 @@ Each test:
 Test fixtures are located in [the docker project's resources](../docker/src/test/resources/fixtures/), each containing a minimal `.devcontainer/devenv.yaml` configuration for testing specific modules.
 
 Since the [combined modules test](../docker/src/test/scala/com/gu/devenv/docker/CombinedModulesTest.scala) reuses the verifiers from individual module tests, the checks are located in [the verifiers package](../docker/src/test/scala/com/gu/devenv/docker/verifiers).
+
+## Debugging Module Tests
+
+[MiseModuleTest](../docker/src/test/scala/com/gu/devenv/docker/MiseModuleTest.scala) includes a debug test for troubleshooting container setup issues. The debug test is normally disabled (marked with `ignore` instead of `in`) to prevent it from cluttering the test output.
+
+To enable it, change this swap `ignore` with `in` for `"debug" taggedAs ContainerTest ignore {` and run the test. Remember to change it back before committing.
