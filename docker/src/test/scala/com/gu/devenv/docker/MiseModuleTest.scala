@@ -81,8 +81,19 @@ class MiseModuleTest extends AnyFreeSpec with Matchers with DevcontainerTestSupp
           fail(s"Failed to start container: $error")
 
         case Right(runner) =>
-          val envResult = runner.exec("mise doctor")
-          println(envResult.stdout)
+          val shortOutputs = List(
+            "whoami"       -> runner.exec("whoami"),
+            "pwd"          -> runner.exec("pwd"),
+            "node version" -> runner.exec("node --version")
+          )
+          shortOutputs.foreach { case (label, result) =>
+            println(s"🔍 $label (${result.exitCode}): ${result.combinedOutput.trim}")
+          }
+          val lsResult = runner.exec("ls -la")
+          println(s"🔍 ls:\n${lsResult.combinedOutput.trim}")
+          val doctorResult = runner.exec("mise doctor")
+          println(s"🔍 mise doctor:\n${doctorResult.combinedOutput.trim}")
+
       }
     }
   }

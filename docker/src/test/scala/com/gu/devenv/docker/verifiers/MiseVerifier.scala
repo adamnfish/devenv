@@ -7,7 +7,7 @@ import com.gu.devenv.docker.testutils.DevcontainerRunner
   * Checks:
   *   - mise binary is installed
   *   - mise doctor runs successfully
-  *   - Tools from .mise.toml are available on PATH via shims
+  *   - Tools from .tool-versions are available on PATH via shims
   */
 object MiseVerifier {
   // 'mise' should be on the $PATH
@@ -39,10 +39,10 @@ object MiseVerifier {
   }
 
   private def checkMiseToolsAvailable(runner: DevcontainerRunner): Either[String, Unit] = {
-    // Check that node is available via mise shims (our test fixture installs node 22)
+    // Check that node is available via mise shims (our test fixture installs node 24)
     // The shims directory is on PATH via remoteEnv
     val result = runner.exec("node --version")
-    if (result.succeeded && result.stdout.contains("v22")) {
+    if (result.succeeded && result.stdout.contains("v24")) {
       Right(())
     } else if (result.succeeded) {
       Left(s"node is available but wrong version: ${result.stdout}")

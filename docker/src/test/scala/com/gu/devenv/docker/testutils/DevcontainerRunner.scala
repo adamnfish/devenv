@@ -16,6 +16,11 @@ class DevcontainerRunner(workspaceDir: Path) {
     workspaceDir.resolve(".devcontainer/shared/devcontainer.json").toAbsolutePath.toString
   private val devcontainer = "npx --yes @devcontainers/cli"
 
+  // Disable Git root mounting since test workspaces are temporary directories without Git.
+  // Without this, the devcontainer CLI defaults to --mount-workspace-git-root=true which
+  // causes incomplete workspace mounting on CI environments (e.g., GHA).
+  private val noGitRoot = "--mount-workspace-git-root=false"
+
   /** Builds the devcontainer image */
   def build(): CommandResult =
     CommandRunner.run(s"$devcontainer build --workspace-folder $workspacePath --config $configPath")
@@ -23,7 +28,7 @@ class DevcontainerRunner(workspaceDir: Path) {
   /** Starts the devcontainer and returns its ID */
   def up(): Either[String, Unit] = {
     val result = CommandRunner.run(
-      s"$devcontainer up --workspace-folder $workspacePath --config $configPath"
+      s"$devcontainer up --workspace-folder $workspacePath --config $configPath $noGitRoot"
     )
     if (result.succeeded) {
       Right(())
@@ -35,7 +40,7 @@ class DevcontainerRunner(workspaceDir: Path) {
   /** Executes a command inside the running devcontainer */
   def exec(command: String): CommandResult =
     CommandRunner.run(
-      s"""$devcontainer exec --workspace-folder $workspacePath --config $configPath -- bash -c '$command'"""
+      s"""$devcontainer exec --workspace-folder $workspacePath --config $configPath $noGitRoot -- bash -c '$command'"""
     )
 
   /** Stops and removes the devcontainer

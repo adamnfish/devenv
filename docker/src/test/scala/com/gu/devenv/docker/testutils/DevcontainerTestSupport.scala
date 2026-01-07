@@ -29,19 +29,13 @@ object ContainerTest extends Tag("com.gu.devenv.docker.ContainerTest")
   * noisy duplicate error messages.
   */
 trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll { self: Suite =>
-  // the root test fixtures directory, each fixture is found under this
-  protected lazy val fixturesDir: Path = {
-    val resource = getClass.getResource("/fixtures")
-    require(resource != null, "Could not find fixtures directory in resources")
-    Path.of(resource.toURI)
-  }
+  // The root test fixtures directory, read directly from the source tree.
+  // This avoids sbt's resource filtering which excludes hidden files (like .tool-versions).
+  // The path is relative to the project root where sbt runs.
+  protected lazy val fixturesDir: Path = Path.of("docker/fixtures")
 
-  // user config fixture directory with empty devenv.yaml
-  protected lazy val userConfigFixtureDir: Path = {
-    val resource = getClass.getResource("/fixtures/user-config/.config/devenv")
-    require(resource != null, "Could not find user-config fixture directory in resources")
-    Path.of(resource.toURI)
-  }
+  // User config fixture directory with empty devenv.yaml
+  protected lazy val userConfigFixtureDir: Path = fixturesDir.resolve("user-config/.config/devenv")
 
   protected var currentWorkspace: Option[Path]            = None
   protected var currentRunner: Option[DevcontainerRunner] = None
@@ -53,7 +47,7 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll 
     // Check that we can find the fixtures directory
     require(
       Files.isDirectory(fixturesDir),
-      s"Fixtures directory not found at: $fixturesDir. This indicates a problem with the test resources setup - ensure e2e/src/test/resources/fixtures exists and is properly configured."
+      s"Fixtures directory not found at: ${fixturesDir.toAbsolutePath}. Tests must be run from the project root directory."
     )
 
     // Check that docker is installed and running
@@ -79,6 +73,7 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll 
 
     val tempDir = Files.createTempDirectory(s"devenv-docker-$fixtureName-")
     copyDirectory(fixtureDir, tempDir)
+
 
     currentWorkspace = Some(tempDir)
     tempDir
