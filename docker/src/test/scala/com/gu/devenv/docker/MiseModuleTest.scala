@@ -73,7 +73,7 @@ class MiseModuleTest extends AnyFreeSpec with Matchers with DevcontainerTestSupp
     }
 
     // replace `ignore` with `in` to enable this test for debugging purposes
-    "debug" taggedAs ContainerTest in {
+    "debug" taggedAs ContainerTest ignore {
       val workspace = setupWorkspace("mise")
 
       startContainer(workspace) match {
