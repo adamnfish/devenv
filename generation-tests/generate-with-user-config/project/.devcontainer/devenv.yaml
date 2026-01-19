@@ -2,7 +2,7 @@
 name: "User Config Test Project"
 
 modules:
-  - apt-updates
+  - scala
 
 plugins:
   vscode:
