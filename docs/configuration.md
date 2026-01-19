@@ -42,7 +42,6 @@ The project config (`.devcontainer/devenv.yaml`) supports the following fields:
 name: my-project
 image: mcr.microsoft.com/devcontainers/base:ubuntu
 modules:
-  - apt-updates
   - mise
 forwardPorts:
   - 3000
@@ -100,7 +99,6 @@ Modules are pre-configured bundles of features, plugins, and commands that can b
 
 ### Available Modules
 
-- **`apt-updates`** - Applies apt security updates during container creation (Ubuntu/Debian only)
 - **`mise`** - Installs and configures [mise](https://mise.jdx.dev/) for version management of languages and tools
 - **`docker-in-docker`** - Enables running Docker containers within the devcontainer. Uses an isolated Docker daemon (not host socket) with minimal capabilities for better security. Disabled by default.
   - Image storage is ephemeral (lost on container rebuild)
@@ -112,7 +110,6 @@ Modules are pre-configured bundles of features, plugins, and commands that can b
 ```yaml
 # In .devcontainer/devenv.yaml
 modules:
-  - apt-updates
   - mise
   # - docker-in-docker
 ```
@@ -121,7 +118,6 @@ To enable docker-in-docker, uncomment it:
 
 ```yaml
 modules:
-  - apt-updates
   - mise
   - docker-in-docker  # Now enabled
 ```

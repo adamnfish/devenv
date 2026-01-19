@@ -10,10 +10,11 @@ object Modules {
   // all registered modules are here
   // In the future we might provide ways to register custom modules but this is fine for now
   val builtInModules: List[Module] =
-    List(aptUpdates, mise, dockerInDocker)
+    List(mise, dockerInDocker)
 
   case class Module(
       name: String,
+      summary: String,
       enabledByDefault: Boolean,
       contribution: ModuleContribution
   )

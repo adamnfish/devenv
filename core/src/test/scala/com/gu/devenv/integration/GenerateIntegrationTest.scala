@@ -214,20 +214,6 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
     }
 
     "generating a project that includes modules" - {
-      "should apply apt-updates module features" in withTempDirs { (tempDir, userConfigDir) =>
-        val devcontainerDir = tempDir.resolve(".devcontainer")
-
-        Devenv.init(devcontainerDir, modules).success.value
-        Files.writeString(devcontainerDir.resolve("devenv.yaml"), projectConfigWithAptUpdates)
-
-        Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
-
-        val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
-
-        sharedJson should include("apt-get update")
-        sharedJson should include("apt-get upgrade")
-      }
-
       "should apply mise module features" in withTempDirs { (tempDir, userConfigDir) =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
@@ -256,7 +242,6 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
 
         val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
 
-        sharedJson should include("apt-get update")
         sharedJson should include("mise install")
       }
 
@@ -304,6 +289,31 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         // User should have merged mise plugins from module and user plugins
         userJson should include("hverlin.mise-vscode")
         userJson should include("com.github.l34130.mise")
+      }
+    }
+
+    /** Debug helper: prints generated devcontainer.json for manual inspection.
+      *
+      * To use, change `ignore` to `in` and run: sbt "core/testOnly *GenerateIntegrationTest -- -z
+      * \"print generated devcontainer\""
+      */
+    "print generated devcontainer for debugging" ignore {
+      withTempDirs { (tempDir, userConfigDir) =>
+        val devcontainerDir = tempDir.resolve(".devcontainer")
+
+        Devenv.init(devcontainerDir, modules).success.value
+        Files.writeString(devcontainerDir.resolve("devenv.yaml"), complexProjectConfig)
+        Files.writeString(userConfigDir.resolve("devenv.yaml"), userConfigWithPlugins)
+
+        Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
+
+        val userJson   = Files.readString(devcontainerDir.resolve("user/devcontainer.json"))
+        val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
+
+        println("=== User devcontainer.json ===")
+        println(userJson)
+        println("\n=== Shared devcontainer.json ===")
+        println(sharedJson)
       }
     }
   }

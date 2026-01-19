@@ -17,6 +17,7 @@ import com.gu.devenv.{Command, Env, Mount, Plugins}
 private[modules] val mise =
   Module(
     name = "mise",
+    summary = "Install and configure mise for dev tools management (https://mise.jdx.dev/)",
     enabledByDefault = true,
     contribution = ModuleContribution(
       /* These commands set up mise inside the container after creation.

@@ -163,10 +163,10 @@ if [ -f ".devcontainer/user/devcontainer.json" ]; then
     fi
 
     # Check for module contributions
-    if grep -q "apt-get update" ".devcontainer/user/devcontainer.json"; then
-        pass "apt-updates module included in user config"
+    if grep -q "mise install" ".devcontainer/user/devcontainer.json"; then
+        pass "mise module included in user config"
     else
-        fail "apt-updates module missing from user config" ""
+        fail "mise module missing from user config" ""
     fi
 
     # Check for project content

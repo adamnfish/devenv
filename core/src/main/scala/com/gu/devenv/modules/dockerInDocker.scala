@@ -11,6 +11,7 @@ import io.circe.Json
 private[modules] val dockerInDocker =
   Module(
     name = "docker-in-docker",
+    summary = "Enable running Docker containers within the devcontainer",
     enabledByDefault = false,
     contribution = ModuleContribution(
       features = Map(

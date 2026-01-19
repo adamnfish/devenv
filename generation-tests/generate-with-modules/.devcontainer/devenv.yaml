@@ -2,7 +2,6 @@
 name: "Generation Test Project"
 
 modules:
-  - apt-updates
   - mise
 
 image: "mcr.microsoft.com/devcontainers/base:ubuntu"

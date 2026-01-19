@@ -1,7 +1,6 @@
 name: "combined-modules-test"
 
 modules:
-  - apt-updates
   - mise
   - docker-in-docker
 

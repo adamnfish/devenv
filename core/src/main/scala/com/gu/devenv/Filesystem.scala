@@ -109,6 +109,11 @@ object Filesystem {
        |""".stripMargin
 
   private def devenvContents(modules: List[Module]) = {
+    val moduleDescriptions = modules
+      .map { module =>
+        s"# - ${module.name}: ${module.summary}"
+      }
+      .mkString("\n")
     val stubModules = modules
       .map { module =>
         if (module.enabledByDefault)
@@ -125,9 +130,7 @@ object Filesystem {
         |name: "CHANGE_ME"
         |
         |# Modules: Built-in functionality
-        |# - apt-updates: Apply apt security updates during container creation
-        |# - mise: Install mise for version management (https://mise.jdx.dev/)
-        |# - docker-in-docker: Enable running Docker containers within the devcontainer
+        |$moduleDescriptions
         |# To disable, comment out or remove items from this list
         |modules:
         |$stubModules

@@ -4,7 +4,6 @@ Tests the `devenv generate` command with a complete configuration including modu
 
 ## Setup:
 - Pre-configured `.devcontainer/devenv.yaml` with:
-  - apt-updates module
   - mise module
   - plugins
   - forwardPorts

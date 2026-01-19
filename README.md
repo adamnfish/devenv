@@ -8,8 +8,7 @@ For example, this `.devcontainer/devenv.yaml` file in your project:
 
 ```yaml
 name: "devenv"
-modules:  # Pre-configured bundles (e.g., apt-updates, mise for version management)
-  - apt-updates
+modules:  # Pre-configured bundles (e.g., mise for version management)
   - mise
 plugins:
   vscode:
