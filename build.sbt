@@ -66,14 +66,16 @@ lazy val core = project
   .in(file("core"))
   .settings(
     libraryDependencies ++= Seq(
-      "io.circe"      %% "circe-core"           % circeVersion,
-      "io.circe"      %% "circe-generic"        % circeVersion,
-      "io.circe"      %% "circe-parser"         % circeVersion,
-      "io.circe"      %% "circe-generic-extras" % "0.14.5-RC1",
-      "io.circe"      %% "circe-yaml-scalayaml" % "0.16.1",
-      "com.lihaoyi"   %% "fansi"                % "0.5.1",
-      "org.typelevel" %% "cats-core"            % "2.13.0",
-      "org.scalatest" %% "scalatest"            % scalatestVersion % Test
+      "io.circe"          %% "circe-core"           % circeVersion,
+      "io.circe"          %% "circe-generic"        % circeVersion,
+      "io.circe"          %% "circe-parser"         % circeVersion,
+      "io.circe"          %% "circe-generic-extras" % "0.14.5-RC1",
+      "io.circe"          %% "circe-yaml-scalayaml" % "0.16.1",
+      "com.lihaoyi"       %% "fansi"                % "0.5.1",
+      "org.typelevel"     %% "cats-core"            % "2.13.0",
+      "org.scalatest"     %% "scalatest"            % scalatestVersion % Test,
+      "org.scalacheck"    %% "scalacheck"           % "1.19.0"         % Test,
+      "org.scalatestplus" %% "scalacheck-1-19"      % "3.2.19.0"       % Test
     )
   )
 
