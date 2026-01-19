@@ -7,6 +7,16 @@ import cats.implicits.*
 import com.gu.devenv.{Command, Env, Mount, Plugins, ProjectConfig}
 
 object Modules {
+  // all registered modules are here
+  // In the future we might provide ways to register custom modules but this is fine for now
+  val builtInModules: List[Module] =
+    List(aptUpdates, mise, dockerInDocker)
+
+  case class Module(
+      name: String,
+      enabledByDefault: Boolean,
+      contribution: ModuleContribution
+  )
   case class ModuleContribution(
       features: Map[String, Json] = Map.empty,
       mounts: List[Mount] = Nil,
@@ -21,9 +31,9 @@ object Modules {
   /** Apply modules to a project config, merging their contributions. Explicit config takes
     * precedence over module defaults. Returns a Failure if any unknown modules are specified.
     */
-  def applyModules(config: ProjectConfig): Try[ProjectConfig] =
+  def applyModules(config: ProjectConfig, modules: List[Module]): Try[ProjectConfig] =
     config.modules
-      .traverse(getModuleContribution) // lookup requested modules to check we support them
+      .traverse(getModuleContribution(modules)) // lookup requested modules to check we support them
       .map { moduleContributions =>
         moduleContributions.foldRight(config)((contribution, cfg) =>
           applyModuleContribution(cfg, contribution)
@@ -51,18 +61,11 @@ object Modules {
       securityOpt = contribution.securityOpt ++ config.securityOpt
     )
 
-  private def getModuleContribution(
+  private def getModuleContribution(modules: List[Module])(
       moduleName: String
   ): Try[ModuleContribution] =
-    moduleName match {
-      case "apt-updates"      => Success(aptUpdates)
-      case "mise"             => Success(mise)
-      case "docker-in-docker" => Success(dockerInDocker)
-      case unknown =>
-        Failure(
-          new IllegalArgumentException(
-            s"Unknown module: '$unknown'. Available modules: apt-updates, mise, docker-in-docker"
-          )
-        )
+    modules.find(_.name == moduleName) match {
+      case Some(module) => Success(module.contribution)
+      case None         => Failure(new IllegalArgumentException(s"Unknown module: '$moduleName'"))
     }
 }

@@ -2,6 +2,7 @@ package com.gu.devenv.integration
 
 import com.gu.devenv.Devenv
 import com.gu.devenv.GenerateResult
+import com.gu.devenv.modules.Modules.builtInModules
 import com.gu.devenv.Filesystem.FileSystemStatus
 import com.gu.devenv.integration.IntegrationTestHelpers._
 import io.circe.parser._
@@ -12,13 +13,14 @@ import org.scalatest.matchers.should.Matchers
 import java.nio.file.Files
 
 class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
+  private val modules: List[com.gu.devenv.modules.Modules.Module] = builtInModules
 
   "generate" - {
     "generating for an uninitialized directory" - {
       "should return NotInitialized result" in withTempDirs { (tempDir, userConfigDir) =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        val result = Devenv.generate(devcontainerDir, userConfigDir).success.value
+        val result = Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
         result shouldBe GenerateResult.NotInitialized
       }
@@ -26,7 +28,7 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
       "should not create any files" in withTempDirs { (tempDir, userConfigDir) =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        Devenv.generate(devcontainerDir, userConfigDir).success.value
+        Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
         Files.exists(devcontainerDir) shouldBe false
       }
@@ -37,9 +39,9 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
         // Initialize first
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
 
-        val result = Devenv.generate(devcontainerDir, userConfigDir).success.value
+        val result = Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
         result shouldBe GenerateResult.ConfigNotCustomized
       }
@@ -47,8 +49,8 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
       "should not create devcontainer.json files" in withTempDirs { (tempDir, userConfigDir) =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        Devenv.init(devcontainerDir).success.value
-        Devenv.generate(devcontainerDir, userConfigDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
+        Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
         Files.exists(devcontainerDir.resolve("user/devcontainer.json")) shouldBe false
         Files.exists(devcontainerDir.resolve("shared/devcontainer.json")) shouldBe false
@@ -60,11 +62,11 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
         // Initialize and customize
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
         val devenvFile = devcontainerDir.resolve("devenv.yaml")
         Files.writeString(devenvFile, basicProjectConfig)
 
-        val result = Devenv.generate(devcontainerDir, userConfigDir).success.value
+        val result = Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
         result match {
           case GenerateResult.Success(userStatus, sharedStatus) =>
@@ -80,10 +82,10 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
       "should generate valid JSON devcontainer files" in withTempDirs { (tempDir, userConfigDir) =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
         Files.writeString(devcontainerDir.resolve("devenv.yaml"), basicProjectConfig)
 
-        Devenv.generate(devcontainerDir, userConfigDir).success.value
+        Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
         val userJson   = Files.readString(devcontainerDir.resolve("user/devcontainer.json"))
         val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
@@ -95,10 +97,10 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
       "should include project name in generated files" in withTempDirs { (tempDir, userConfigDir) =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
         Files.writeString(devcontainerDir.resolve("devenv.yaml"), basicProjectConfig)
 
-        Devenv.generate(devcontainerDir, userConfigDir).success.value
+        Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
         val userJson   = Files.readString(devcontainerDir.resolve("user/devcontainer.json"))
         val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
@@ -111,11 +113,11 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         (tempDir, userConfigDir) =>
           val devcontainerDir = tempDir.resolve(".devcontainer")
 
-          Devenv.init(devcontainerDir).success.value
+          Devenv.init(devcontainerDir, modules).success.value
           Files.writeString(devcontainerDir.resolve("devenv.yaml"), basicProjectConfig)
 
           // First generation
-          Devenv.generate(devcontainerDir, userConfigDir).success.value
+          Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
           val firstUserJson = Files.readString(devcontainerDir.resolve("user/devcontainer.json"))
 
@@ -124,7 +126,7 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
           Files.writeString(devcontainerDir.resolve("devenv.yaml"), updatedConfig)
 
           // Second generation
-          val result = Devenv.generate(devcontainerDir, userConfigDir).success.value
+          val result = Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
           result match {
             case GenerateResult.Success(userStatus, sharedStatus) =>
@@ -145,11 +147,11 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
       "should merge user plugins into project plugins" in withTempDirs { (tempDir, userConfigDir) =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
         Files.writeString(devcontainerDir.resolve("devenv.yaml"), projectConfigWithPlugins)
         Files.writeString(userConfigDir.resolve("devenv.yaml"), userConfigWithPlugins)
 
-        Devenv.generate(devcontainerDir, userConfigDir).success.value
+        Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
         val userJson = Files.readString(devcontainerDir.resolve("user/devcontainer.json"))
 
@@ -164,11 +166,11 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         (tempDir, userConfigDir) =>
           val devcontainerDir = tempDir.resolve(".devcontainer")
 
-          Devenv.init(devcontainerDir).success.value
+          Devenv.init(devcontainerDir, modules).success.value
           Files.writeString(devcontainerDir.resolve("devenv.yaml"), projectConfigWithPlugins)
           Files.writeString(userConfigDir.resolve("devenv.yaml"), userConfigWithPlugins)
 
-          Devenv.generate(devcontainerDir, userConfigDir).success.value
+          Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
           val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
 
@@ -183,11 +185,11 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         (tempDir, userConfigDir) =>
           val devcontainerDir = tempDir.resolve(".devcontainer")
 
-          Devenv.init(devcontainerDir).success.value
+          Devenv.init(devcontainerDir, modules).success.value
           Files.writeString(devcontainerDir.resolve("devenv.yaml"), basicProjectConfig)
           Files.writeString(userConfigDir.resolve("devenv.yaml"), userConfigWithDotfiles)
 
-          Devenv.generate(devcontainerDir, userConfigDir).success.value
+          Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
           val userJson = Files.readString(devcontainerDir.resolve("user/devcontainer.json"))
 
@@ -199,11 +201,11 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         (tempDir, userConfigDir) =>
           val devcontainerDir = tempDir.resolve(".devcontainer")
 
-          Devenv.init(devcontainerDir).success.value
+          Devenv.init(devcontainerDir, modules).success.value
           Files.writeString(devcontainerDir.resolve("devenv.yaml"), basicProjectConfig)
           Files.writeString(userConfigDir.resolve("devenv.yaml"), userConfigWithDotfiles)
 
-          Devenv.generate(devcontainerDir, userConfigDir).success.value
+          Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
           val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
 
@@ -215,10 +217,10 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
       "should apply apt-updates module features" in withTempDirs { (tempDir, userConfigDir) =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
         Files.writeString(devcontainerDir.resolve("devenv.yaml"), projectConfigWithAptUpdates)
 
-        Devenv.generate(devcontainerDir, userConfigDir).success.value
+        Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
         val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
 
@@ -229,10 +231,10 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
       "should apply mise module features" in withTempDirs { (tempDir, userConfigDir) =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
         Files.writeString(devcontainerDir.resolve("devenv.yaml"), projectConfigWithMise)
 
-        Devenv.generate(devcontainerDir, userConfigDir).success.value
+        Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
         val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
 
@@ -247,10 +249,10 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
       "should apply multiple modules" in withTempDirs { (tempDir, userConfigDir) =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
         Files.writeString(devcontainerDir.resolve("devenv.yaml"), projectConfigWithMultipleModules)
 
-        Devenv.generate(devcontainerDir, userConfigDir).success.value
+        Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
         val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))
 
@@ -261,10 +263,10 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
       "should fail with unknown module" in withTempDirs { (tempDir, userConfigDir) =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
         Files.writeString(devcontainerDir.resolve("devenv.yaml"), projectConfigWithUnknownModule)
 
-        val result = Devenv.generate(devcontainerDir, userConfigDir)
+        val result = Devenv.generate(devcontainerDir, userConfigDir, modules)
 
         result.isFailure shouldBe true
       }
@@ -274,11 +276,11 @@ class GenerateIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
       "should merge all configurations correctly" in withTempDirs { (tempDir, userConfigDir) =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
         Files.writeString(devcontainerDir.resolve("devenv.yaml"), complexProjectConfig)
         Files.writeString(userConfigDir.resolve("devenv.yaml"), userConfigWithPlugins)
 
-        Devenv.generate(devcontainerDir, userConfigDir).success.value
+        Devenv.generate(devcontainerDir, userConfigDir, modules).success.value
 
         val userJson   = Files.readString(devcontainerDir.resolve("user/devcontainer.json"))
         val sharedJson = Files.readString(devcontainerDir.resolve("shared/devcontainer.json"))

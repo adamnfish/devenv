@@ -4,6 +4,7 @@ import io.circe.Json
 import org.scalatest.{OptionValues, TryValues}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+import com.gu.devenv.modules.Modules.builtInModules
 
 import scala.util.Success
 
@@ -13,6 +14,8 @@ class ConfigTest
     with TryValues
     with OptionValues
     with HavingMatchers {
+  private val modules = builtInModules
+
   "Loads our example project config file" in {
     val exampleConfig =
       scala.io.Source.fromResource("projectConfig.yaml").mkString
@@ -136,7 +139,7 @@ class ConfigTest
     val Success(projectConfig) =
       Config.parseProjectConfig(projectConfigYaml).success
 
-    val Success(json) = Config.configAsJson(projectConfig).success
+    val Success(json) = Config.configAsJson(projectConfig, modules).success
 
     // Assert against JSON structure
     (json \\ "name").head.asString should contain(
@@ -193,7 +196,7 @@ class ConfigTest
       Config.parseUserConfig(userConfigYaml).success
 
     val merged        = Config.mergeConfigs(projectConfig, Some(userConfig))
-    val Success(json) = Config.configAsJson(merged).success
+    val Success(json) = Config.configAsJson(merged, modules).success
 
     // Assert against JSON structure
     (json \\ "name").head.asString should contain(
@@ -241,7 +244,7 @@ class ConfigTest
       Config.parseUserConfig(userConfigYaml).success
 
     val merged        = Config.mergeConfigs(projectConfig, Some(userConfig))
-    val Success(json) = Config.configAsJson(merged).success
+    val Success(json) = Config.configAsJson(merged, modules).success
 
     println(json.spaces2)
   }

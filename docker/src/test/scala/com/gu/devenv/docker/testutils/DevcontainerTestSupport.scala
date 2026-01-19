@@ -34,6 +34,9 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll 
   // The path is relative to the project root where sbt runs.
   protected lazy val fixturesDir: Path = Path.of("docker/fixtures")
 
+  // use the built-in modules for these tests while that's all that is supported
+  private val modules = com.gu.devenv.modules.Modules.builtInModules
+
   // User config fixture directory with empty devenv.yaml
   protected lazy val userConfigFixtureDir: Path = fixturesDir.resolve("user-config/.config/devenv")
 
@@ -74,7 +77,6 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll 
     val tempDir = Files.createTempDirectory(s"devenv-docker-$fixtureName-")
     copyDirectory(fixtureDir, tempDir)
 
-
     currentWorkspace = Some(tempDir)
     tempDir
   }
@@ -89,7 +91,7 @@ trait DevcontainerTestSupport extends BeforeAndAfterEach with BeforeAndAfterAll 
     // Pass the directory containing devenv.yaml (Filesystem.resolveUserConfigPaths will append the filename)
     val userConfigPath = userConfigFixtureDir
 
-    Devenv.generate(devcontainerDir, userConfigPath) match {
+    Devenv.generate(devcontainerDir, userConfigPath, modules) match {
       case scala.util.Success(result: GenerateResult.Success) =>
         Right(result)
       case scala.util.Success(GenerateResult.NotInitialized) =>

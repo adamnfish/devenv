@@ -1,6 +1,7 @@
 package com.gu.devenv.integration
 
 import com.gu.devenv.Devenv
+import com.gu.devenv.modules.Modules.builtInModules
 import com.gu.devenv.Filesystem.{FileSystemStatus, GitignoreStatus}
 import com.gu.devenv.integration.IntegrationTestHelpers.withTempDir
 import org.scalatest.TryValues
@@ -10,12 +11,14 @@ import org.scalatest.matchers.should.Matchers
 import java.nio.file.Files
 
 class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
+  private val modules = builtInModules
+
   "init" - {
     "initializing an empty (non-existent) directory" - {
       "should create all required directories and files" in withTempDir { tempDir =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        val result = Devenv.init(devcontainerDir).success.value
+        val result = Devenv.init(devcontainerDir, modules).success.value
 
         result.devcontainerStatus shouldBe FileSystemStatus.Created
         result.userStatus shouldBe FileSystemStatus.Created
@@ -33,7 +36,7 @@ class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
       "should create .gitignore with user/ entry" in withTempDir { tempDir =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
 
         val gitignoreContent = Files.readString(devcontainerDir.resolve(".gitignore"))
         gitignoreContent should include("user/")
@@ -43,7 +46,7 @@ class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
       "should create devenv.yaml with placeholder name" in withTempDir { tempDir =>
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
 
         val devenvContent = Files.readString(devcontainerDir.resolve("devenv.yaml"))
         devenvContent should include("name: \"CHANGE_ME\"")
@@ -56,10 +59,10 @@ class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
         // First initialization
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
 
         // Second initialization
-        val result = Devenv.init(devcontainerDir).success.value
+        val result = Devenv.init(devcontainerDir, modules).success.value
 
         result.devcontainerStatus shouldBe FileSystemStatus.AlreadyExists
         result.userStatus shouldBe FileSystemStatus.AlreadyExists
@@ -72,7 +75,7 @@ class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         val devcontainerDir = tempDir.resolve(".devcontainer")
 
         // First initialization
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
 
         // Modify the devenv.yaml file
         val devenvFile    = devcontainerDir.resolve("devenv.yaml")
@@ -80,7 +83,7 @@ class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         Files.writeString(devenvFile, customContent)
 
         // Second initialization
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
 
         // File should still have custom content
         Files.readString(devenvFile) shouldBe customContent
@@ -97,7 +100,7 @@ class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         val existingContent = "*.log\n*.tmp\n"
         Files.writeString(gitignoreFile, existingContent)
 
-        val result = Devenv.init(devcontainerDir).success.value
+        val result = Devenv.init(devcontainerDir, modules).success.value
 
         result.gitignoreStatus shouldBe GitignoreStatus.Updated
 
@@ -115,7 +118,7 @@ class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         val existingContent = "# My custom gitignore\n*.log\ntarget/\n"
         Files.writeString(gitignoreFile, existingContent)
 
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
 
         val updatedContent = Files.readString(gitignoreFile)
         updatedContent should include("*.log")
@@ -133,7 +136,7 @@ class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         val existingContent = "*.log\nuser/\n*.tmp\n"
         Files.writeString(gitignoreFile, existingContent)
 
-        val result = Devenv.init(devcontainerDir).success.value
+        val result = Devenv.init(devcontainerDir, modules).success.value
 
         result.gitignoreStatus shouldBe GitignoreStatus.AlreadyExistsWithExclusion
       }
@@ -146,7 +149,7 @@ class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         val existingContent = "*.log\nuser/\n*.tmp\n"
         Files.writeString(gitignoreFile, existingContent)
 
-        Devenv.init(devcontainerDir).success.value
+        Devenv.init(devcontainerDir, modules).success.value
 
         Files.readString(gitignoreFile) shouldBe existingContent
       }
@@ -159,7 +162,7 @@ class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         val existingContent = "*.log\n  user/  \n*.tmp\n"
         Files.writeString(gitignoreFile, existingContent)
 
-        val result = Devenv.init(devcontainerDir).success.value
+        val result = Devenv.init(devcontainerDir, modules).success.value
 
         result.gitignoreStatus shouldBe GitignoreStatus.AlreadyExistsWithExclusion
       }
@@ -171,7 +174,7 @@ class InitIntegrationTest extends AnyFreeSpec with Matchers with TryValues {
         Files.createDirectories(devcontainerDir)
         Files.createDirectories(devcontainerDir.resolve("user"))
 
-        val result = Devenv.init(devcontainerDir).success.value
+        val result = Devenv.init(devcontainerDir, modules).success.value
 
         result.devcontainerStatus shouldBe FileSystemStatus.AlreadyExists
         result.userStatus shouldBe FileSystemStatus.AlreadyExists

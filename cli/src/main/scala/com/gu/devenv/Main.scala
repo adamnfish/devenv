@@ -1,5 +1,6 @@
 package com.gu.devenv
 
+import com.gu.devenv.modules.Modules.builtInModules
 import scala.util.{Failure, Success}
 import java.nio.file.Paths
 import fansi.{Bold, Color}
@@ -55,8 +56,10 @@ object Main {
     */
   def init(): Unit = {
     val devcontainerDir = Paths.get(".devcontainer")
+    // these could be loaded dynamically in the future
+    val modules = builtInModules
 
-    Devenv.init(devcontainerDir) match {
+    Devenv.init(devcontainerDir, modules) match {
       case Success(result) =>
         println(Output.initResultMessage(result))
       case Failure(exception) =>
@@ -77,8 +80,10 @@ object Main {
     val devcontainerDir = Paths.get(".devcontainer")
     val userConfigPath =
       Paths.get(System.getProperty("user.home"), ".config", "devenv")
+    // these could be loaded dynamically in the future
+    val modules = builtInModules
 
-    Devenv.generate(devcontainerDir, userConfigPath) match {
+    Devenv.generate(devcontainerDir, userConfigPath, modules) match {
       case Success(result) =>
         println(Output.generateResultMessage(result))
       case Failure(exception) =>
@@ -98,8 +103,10 @@ object Main {
     val devcontainerDir = Paths.get(".devcontainer")
     val userConfigPath =
       Paths.get(System.getProperty("user.home"), ".config", "devenv")
+    // these could be loaded dynamically in the future
+    val modules = builtInModules
 
-    Devenv.check(devcontainerDir, userConfigPath) match {
+    Devenv.check(devcontainerDir, userConfigPath, modules) match {
       case Success(result) =>
         println(Output.checkResultMessage(result))
         result match {

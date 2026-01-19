@@ -1,6 +1,7 @@
 package com.gu.devenv
 
 import com.gu.devenv.modules.Modules
+import com.gu.devenv.modules.Modules.Module
 import io.circe.Json
 import io.circe.syntax.*
 import io.circe.JsonObject
@@ -62,9 +63,9 @@ object Config {
       )
     }
 
-  def configAsJson(projectConfig: ProjectConfig): Try[Json] =
+  def configAsJson(projectConfig: ProjectConfig, modules: List[Module]): Try[Json] =
     // Start by applying requested modules, then put explicit configuration on top of that
-    Modules.applyModules(projectConfig).map { config =>
+    Modules.applyModules(projectConfig, modules).map { config =>
       val customizations = JsonObject(
         "vscode" -> Json.obj(
           "extensions" -> config.plugins.vscode.asJson
@@ -120,12 +121,13 @@ object Config {
 
   def generateConfigs(
       projectConfig: ProjectConfig,
-      maybeUserConfig: Option[UserConfig]
+      maybeUserConfig: Option[UserConfig],
+      modules: List[Module]
   ): Try[(String, String)] = {
     val mergedUserConfig = Config.mergeConfigs(projectConfig, maybeUserConfig)
     for {
-      userJson   <- Config.configAsJson(mergedUserConfig)
-      sharedJson <- Config.configAsJson(projectConfig)
+      userJson   <- Config.configAsJson(mergedUserConfig, modules)
+      sharedJson <- Config.configAsJson(projectConfig, modules)
     } yield (userJson.spaces2, sharedJson.spaces2)
   }
 

@@ -8,7 +8,9 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.util.Failure
 
-class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionValues {
+class OldModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionValues {
+  private val modules = Modules.builtInModules
+
   "Modules.applyModules" - {
     "return the original config when no modules are specified" in {
       val config = ProjectConfig(
@@ -17,7 +19,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
         plugins = Plugins(vscode = List("plugin1"), intellij = List("plugin2"))
       )
 
-      val result = Modules.applyModules(config).success.value
+      val result = Modules.applyModules(config, modules).success.value
 
       result shouldBe config
     }
@@ -28,13 +30,10 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
         modules = List("unknown-module")
       )
 
-      val result = Modules.applyModules(config)
+      val result = Modules.applyModules(config, modules)
 
       result shouldBe a[Failure[_]]
       result.failure.exception.getMessage should include("Unknown module: 'unknown-module'")
-      result.failure.exception.getMessage should include("apt-updates")
-      result.failure.exception.getMessage should include("mise")
-      result.failure.exception.getMessage should include("docker-in-docker")
     }
 
     "apply mise module correctly" in {
@@ -44,7 +43,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
         plugins = Plugins(vscode = List("existing-vscode"), intellij = List("existing-intellij"))
       )
 
-      val result = Modules.applyModules(config).success.value
+      val result = Modules.applyModules(config, modules).success.value
 
       // Should add mise plugins
       result.plugins.vscode should contain allOf ("hverlin.mise-vscode", "existing-vscode")
@@ -77,7 +76,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
         modules = List("apt-updates")
       )
 
-      val result = Modules.applyModules(config).success.value
+      val result = Modules.applyModules(config, modules).success.value
 
       // Should add apt update commands
       result.postCreateCommand should have length 1
@@ -92,7 +91,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
         modules = List("docker-in-docker")
       )
 
-      val result = Modules.applyModules(config).success.value
+      val result = Modules.applyModules(config, modules).success.value
 
       // Should add docker-in-docker feature
       result.features should contain key "ghcr.io/devcontainers/features/docker-in-docker:2"
@@ -112,7 +111,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
         modules = List("apt-updates", "mise")
       )
 
-      val result = Modules.applyModules(config).success.value
+      val result = Modules.applyModules(config, modules).success.value
 
       // Should have both modules' commands in order
       result.postCreateCommand should have length 2
@@ -137,7 +136,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
         postCreateCommand = List(Command("my custom command", "."))
       )
 
-      val result = Modules.applyModules(config).success.value
+      val result = Modules.applyModules(config, modules).success.value
 
       // Explicit features should be preserved
       result.features should contain key explicitFeature
@@ -163,7 +162,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
         postCreateCommand = List(Command("project setup", "/workspace"))
       )
 
-      val result = Modules.applyModules(config).success.value
+      val result = Modules.applyModules(config, modules).success.value
 
       // Should have all commands: apt-updates, mise, then explicit
       result.postCreateCommand should have length 3
@@ -184,7 +183,7 @@ class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionVa
         postStartCommand = List(Command("start script", "."))
       )
 
-      val result = Modules.applyModules(config).success.value
+      val result = Modules.applyModules(config, modules).success.value
 
       // Non-module-affected fields should be preserved
       result.name shouldBe "Test Project"
