@@ -7,9 +7,9 @@ import com.gu.devenv.modules.Modules.{Module, ModuleContribution}
   *
   * This module adds the Scala language plugin for both VS Code and IntelliJ IDEA.
   */
-private[modules] val scalaLanguage = Module(
+private[modules] val scalaLang = Module(
   name = "scala",
-  summary = "Add IDE plugin support for Scala development",
+  summary = "Add IDE plugins for Scala development",
   enabledByDefault = false,
   contribution = ModuleContribution(
     plugins = Plugins(

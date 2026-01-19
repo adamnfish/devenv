@@ -1,16 +1,16 @@
 package com.gu.devenv.modules
 
 import com.gu.devenv.Plugins
-import com.gu.devenv.modules.Modules.{ModuleContribution, Module}
+import com.gu.devenv.modules.Modules.{Module, ModuleContribution}
 
 /** Provides IDE plugin support for Node.js development.
   *
   * This module adds Node.js language support plugins for IntelliJ IDEA. VS Code has built-in
   * Node.js support, so no additional plugins are needed.
   */
-private[modules] val node = Module(
+private[modules] val nodeLang = Module(
   name = "node",
-  summary = "Add IDE plugin support for Node.js development",
+  summary = "Add IDE plugins for Node.js development",
   enabledByDefault = false,
   contribution = ModuleContribution(
     plugins = Plugins(
