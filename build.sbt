@@ -52,7 +52,8 @@ lazy val cli = (project in file("cli"))
       "--initialize-at-build-time",        // Initialize most classes at build time
       "--enable-url-protocols=http,https", // Enable HTTP/HTTPS
       "-H:+ReportExceptionStackTraces",    // Better error reporting during build
-      "--verbose",                         // Show build progress
+      "-EDEVENV_VERSION", // Bake the CI build version environment variable into the binary
+      "--verbose",        // Show build progress
       // Optimization flags
       "-O2",        // Optimize for performance
       "--gc=serial" // Use serial GC (suitable for CLI tools)

@@ -37,6 +37,8 @@ jobs:
 
     - name: Build native image
       run: sbt "cli/GraalVMNativeImage/packageBin"
+      env:
+        DEVENV_VERSION: ${{ needs.generate-version.outputs.version }}
 
     - name: Verify and rename binary
       run: |

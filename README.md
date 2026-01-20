@@ -135,7 +135,7 @@ The project uses GitHub Actions to build and publish a native binary for macOS A
 
 > [!WARNING]
 > The GitHub actions workflow does not properly sign the macOS binaries, so the workflow artifact is currently not usable.
-> Building the macOS binary locally on a Macbook works ok for now, this binary can be uploaded to the draft release in Step 4, below.
+> Building the macOS binary locally on a Macbook works ok for now (making sure to set the DEVENV_VERSION environment variable to the desired release version), this binary can be uploaded to the draft release in Step 4, below.
 
 **Creating a release:**
 
@@ -163,7 +163,13 @@ The project uses GitHub Actions to build and publish a native binary for macOS A
 
 **Note:** The release workflow is triggered manually - it will not run automatically on pushes or merges to give full control over when to "cut" a release.
 
-Users can install the release binary with the following command (replace `<latest-release-version>` with your actual version string):
+The version is embedded in the native binary at build time, so users can check their version with:
+
+```bash
+devenv version
+```
+
+Users can install a release binary with the following command (replace `<latest-release-version>` with the actual version string):
 
 ```bash
 VERSION=<latest-release-version>
