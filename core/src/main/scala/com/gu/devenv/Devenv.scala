@@ -1,12 +1,13 @@
 package com.gu.devenv
 
-import cats._
+import cats.*
 import com.gu.devenv.Filesystem.PLACEHOLDER_PROJECT_NAME
 
 import java.nio.file.Path
 import scala.util.Try
 import scala.language.implicitConversions
 import Utils.*
+import com.gu.devenv.modules.Modules.Module
 
 object Devenv {
 
@@ -19,7 +20,7 @@ object Devenv {
     *   - .gitignore (to exclude user directory)
     *   - devenv.yaml (a 'blank' project-specific configuration file)
     */
-  def init(devcontainerDir: Path): Try[InitResult] = {
+  def init(devcontainerDir: Path, modules: List[Module]): Try[InitResult] = {
     val devEnvPaths = Filesystem.resolveDevenvPaths(devcontainerDir)
 
     for {
@@ -29,7 +30,7 @@ object Devenv {
       userStatus      <- Filesystem.createDirIfNotExists(devEnvPaths.userDir)
       sharedStatus    <- Filesystem.createDirIfNotExists(devEnvPaths.sharedDir)
       gitignoreStatus <- Filesystem.setupGitignore(devEnvPaths.gitignoreFile)
-      devenvStatus    <- Filesystem.setupDevenv(devEnvPaths.devenvFile)
+      devenvStatus    <- Filesystem.setupDevenv(devEnvPaths.devenvFile, modules)
     } yield InitResult(
       devcontainerStatus,
       userStatus,
@@ -47,7 +48,8 @@ object Devenv {
     */
   def generate(
       devcontainerDir: Path,
-      userConfigPath: Path
+      userConfigPath: Path,
+      modules: List[Module]
   ): Try[GenerateResult] = withConditions {
     val devEnvPaths = Filesystem.resolveDevenvPaths(devcontainerDir)
     val userPaths   = Filesystem.resolveUserConfigPaths(userConfigPath)
@@ -64,8 +66,10 @@ object Devenv {
         projectConfig.name == PLACEHOLDER_PROJECT_NAME,
         GenerateResult.ConfigNotCustomized
       )
-      maybeUserConfig        <- Config.loadUserConfig(userPaths.devenvConf).liftF
-      (userJson, sharedJson) <- Config.generateConfigs(projectConfig, maybeUserConfig).liftF
+      maybeUserConfig <- Config.loadUserConfig(userPaths.devenvConf).liftF
+      (userJson, sharedJson) <- Config
+        .generateConfigs(projectConfig, maybeUserConfig, modules)
+        .liftF
       userDevcontainerStatus <- Filesystem
         .updateFile(devEnvPaths.userDevcontainerFile, userJson)
         .liftF
@@ -89,7 +93,8 @@ object Devenv {
     */
   def check(
       devcontainerDir: Path,
-      userConfigPath: Path
+      userConfigPath: Path,
+      modules: List[Module]
   ): Try[CheckResult] = withConditions {
     val devEnvPaths = Filesystem.resolveDevenvPaths(devcontainerDir)
     val userPaths   = Filesystem.resolveUserConfigPaths(userConfigPath)
@@ -110,7 +115,8 @@ object Devenv {
       (expectedUserJson, expectedSharedJson) <- Config
         .generateConfigs(
           projectConfig,
-          maybeUserConfig
+          maybeUserConfig,
+          modules
         )
         .liftF
       actualUserJson <- Filesystem

@@ -8,14 +8,9 @@ For example, this `.devcontainer/devenv.yaml` file in your project:
 
 ```yaml
 name: "devenv"
-modules:  # Pre-configured bundles (e.g., apt-updates, mise for version management)
-  - apt-updates
+modules:  # Pre-configured bundles (mise for version management, scala/node for IDE plugins)
   - mise
-plugins:
-  vscode:
-    - "scala-lang.scala"
-  intellij:
-    - "org.intellij.scala"
+  - scala
 ```
 
 and this user config file in your home directory at `~/.config/devenv/devenv.yaml`:

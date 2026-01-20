@@ -2,8 +2,8 @@
 name: "Generation Test Project"
 
 modules:
-  - apt-updates
   - mise
+  - scala  # Test language module
 
 image: "mcr.microsoft.com/devcontainers/base:ubuntu"
 
@@ -14,7 +14,7 @@ plugins:
   vscode:
     - ms-python.python
   intellij:
-    - org.intellij.scala
+    - com.intellij.plugins.markdown  # Additional plugin beyond module defaults
 
 postCreateCommand:
   - cmd: "echo 'Container created'"

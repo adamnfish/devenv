@@ -1,6 +1,6 @@
 package com.gu.devenv.modules
 
-import com.gu.devenv.modules.Modules.ModuleContribution
+import com.gu.devenv.modules.Modules.{Module, ModuleContribution}
 import io.circe.Json
 
 /** Enables Docker-in-Docker functionality within the development container.
@@ -8,14 +8,20 @@ import io.circe.Json
   * This allows applications that use `docker compose` as part of the development workflow to
   * function correctly inside the development container.
   */
-private[modules] val dockerInDocker = ModuleContribution(
-  features = Map(
-    "ghcr.io/devcontainers/features/docker-in-docker:2" -> Json.obj(
-      "version"                  -> Json.fromString("latest"),
-      "moby"                     -> Json.fromBoolean(true),
-      "dockerDashComposeVersion" -> Json.fromString("v2")
+private[modules] val dockerInDocker =
+  Module(
+    name = "docker-in-docker",
+    summary = "Enable running Docker containers within the devcontainer",
+    enabledByDefault = false,
+    contribution = ModuleContribution(
+      features = Map(
+        "ghcr.io/devcontainers/features/docker-in-docker:2" -> Json.obj(
+          "version"                  -> Json.fromString("latest"),
+          "moby"                     -> Json.fromBoolean(true),
+          "dockerDashComposeVersion" -> Json.fromString("v2")
+        )
+      ),
+      capAdd = List("SYS_ADMIN"),
+      securityOpt = List("seccomp=unconfined")
     )
-  ),
-  capAdd = List("SYS_ADMIN"),
-  securityOpt = List("seccomp=unconfined")
-)
+  )

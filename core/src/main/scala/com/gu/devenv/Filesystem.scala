@@ -3,6 +3,7 @@ package com.gu.devenv
 import java.nio.file.{Files, Path, StandardOpenOption}
 import scala.jdk.CollectionConverters.given
 import scala.util.Try
+import com.gu.devenv.modules.Modules.Module
 
 object Filesystem {
   val PLACEHOLDER_PROJECT_NAME = "CHANGE_ME"
@@ -89,11 +90,11 @@ object Filesystem {
     }
   }
 
-  def setupDevenv(devenvFile: Path): Try[FileSystemStatus] = Try {
+  def setupDevenv(devenvFile: Path, modules: List[Module]): Try[FileSystemStatus] = Try {
     if (!Files.exists(devenvFile)) {
       Files.write(
         devenvFile,
-        devenvContents.getBytes,
+        devenvContents(modules).getBytes,
         StandardOpenOption.CREATE_NEW
       )
       FileSystemStatus.Created
@@ -107,53 +108,63 @@ object Filesystem {
        |user/
        |""".stripMargin
 
-  private val devenvContents =
-    """|# Devenv project configuration
-       |# Edit this file to configure your project's devcontainer
-       |# and then run `devenv generate` to create the devcontainer.json files
-       |
-       |# REQUIRED: Change this to your project name
-       |name: "CHANGE_ME"
-       |
-       |# Modules: Built-in functionality
-       |# - apt-updates: Apply apt security updates during container creation
-       |# - mise: Install mise for version management (https://mise.jdx.dev/)
-       |# - docker-in-docker: Enable running Docker containers within the devcontainer
-       |# To disable, comment out or remove items from this list
-       |modules:
-       |  - apt-updates
-       |  - mise
-       |  # - docker-in-docker
-       |
-       |# Optional: Container image to use (defaults to latest ubuntu LTS)
-       |# image: "mcr.microsoft.com/devcontainers/base:ubuntu"
-       |
-       |# Optional: Ports to forward
-       |# forwardPorts:
-       |#   - 8080  # same port on host and container
-       |#   - "8000:9000"  # hostPort:containerPort
-       |
-       |# Optional: Mount directories from host to container
-       |# mounts:
-       |#   - "source=${localEnv:HOME}/.gu/example,target=/home/vscode/.gu/example,readonly,type=bind,consistency=cached"
-       |
-       |# Optional: IDE plugins - shared project plugins like language support
-       |# plugins:
-       |#   vscode: []
-       |#   intellij: []
-       |
-       |# Optional: Commands to run after container creation
-       |# Each command has a 'cmd' field and a 'workingDirectory' field
-       |# e.g.
-       |# postCreateCommand:
-       |#   - cmd: "npm install"
-       |#     workingDirectory: "."
-       |#   - cmd: "make setup"
-       |#     workingDirectory: "/workspaces/project"
-       |# postStartCommand:
-       |#   - cmd: "echo 'Container started successfully'"
-       |#     workingDirectory: "."
-       |""".stripMargin
+  private def devenvContents(modules: List[Module]) = {
+    val moduleDescriptions = modules
+      .map { module =>
+        s"# - ${module.name}: ${module.summary}"
+      }
+      .mkString("\n")
+    val stubModules = modules
+      .map { module =>
+        if (module.enabledByDefault)
+          s"  - ${module.name}"
+        else
+          s"  # - ${module.name}  # (disabled by default)"
+      }
+      .mkString("\n")
+    s"""|# Devenv project configuration
+        |# Edit this file to configure your project's devcontainer
+        |# and then run `devenv generate` to create the devcontainer.json files
+        |
+        |# REQUIRED: Change this to your project name
+        |name: "CHANGE_ME"
+        |
+        |# Modules: Built-in functionality
+        |$moduleDescriptions
+        |# To disable, comment out or remove items from this list
+        |modules:
+        |$stubModules
+        |
+        |# Optional: Container image to use (defaults to latest ubuntu LTS)
+        |# image: "mcr.microsoft.com/devcontainers/base:ubuntu"
+        |
+        |# Optional: Ports to forward
+        |# forwardPorts:
+        |#   - 8080  # same port on host and container
+        |#   - "8000:9000"  # hostPort:containerPort
+        |
+        |# Optional: Mount directories from host to container
+        |# mounts:
+        |#   - "source=$${localEnv: HOME}/.gu/example,target=/home/vscode/.gu/example,readonly,type=bind,consistency=cached"
+        |
+        |# Optional: IDE plugins - shared project plugins like language support
+        |# plugins:
+        |#   vscode: []
+        |#   intellij: []
+        |
+        |# Optional: Commands to run after container creation
+        |# Each command has a 'cmd' field and a 'workingDirectory' field
+        |# e.g.
+        |# postCreateCommand:
+        |#   - cmd: "npm install"
+        |#     workingDirectory: "."
+        |#   - cmd: "make setup"
+        |#     workingDirectory: "/workspaces/project"
+        |# postStartCommand:
+        |#   - cmd: "echo 'Container started successfully'"
+        |#     workingDirectory: "."
+        |""".stripMargin
+  }
 
   enum FileSystemStatus {
     case Created

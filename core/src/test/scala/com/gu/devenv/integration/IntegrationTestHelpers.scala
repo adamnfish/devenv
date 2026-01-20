@@ -50,12 +50,6 @@ object IntegrationTestHelpers {
        |    - project-intellij-plugin
        |""".stripMargin
 
-  val projectConfigWithAptUpdates: String =
-    """|name: "Project With Apt Updates"
-       |modules:
-       |  - apt-updates
-       |""".stripMargin
-
   val projectConfigWithMise: String =
     """|name: "Project With Mise"
        |modules:
@@ -65,14 +59,14 @@ object IntegrationTestHelpers {
   val projectConfigWithMultipleModules: String =
     """|name: "Project With Multiple Modules"
        |modules:
-       |  - apt-updates
        |  - mise
+       |  - docker-in-docker
        |""".stripMargin
 
   val projectConfigWithModules: String =
     """|name: "Project With Modules"
        |modules:
-       |  - apt-updates
+       |  - mise
        |""".stripMargin
 
   val projectConfigWithUnknownModule: String =
@@ -86,6 +80,7 @@ object IntegrationTestHelpers {
        |image: "mcr.microsoft.com/devcontainers/base:ubuntu"
        |modules:
        |  - mise
+       |  - docker-in-docker
        |plugins:
        |  vscode:
        |    - project-plugin-1

@@ -1,360 +1,312 @@
 package com.gu.devenv.modules
 
 import com.gu.devenv.*
+import com.gu.devenv.modules.Modules.ModuleContribution
 import io.circe.Json
-import org.scalatest.{OptionValues, TryValues}
+import org.scalacheck.Gen
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.util.Failure
-
-class ModulesTest extends AnyFreeSpec with Matchers with TryValues with OptionValues {
-  "Modules.applyModules" - {
-    "return the original config when no modules are specified" in {
-      val config = ProjectConfig(
-        name = "Test Project",
-        modules = Nil,
-        plugins = Plugins(vscode = List("plugin1"), intellij = List("plugin2"))
-      )
-
-      val result = Modules.applyModules(config).success.value
-
-      result shouldBe config
-    }
-
-    "fail with unknown module name" in {
-      val config = ProjectConfig(
-        name = "Test Project",
-        modules = List("unknown-module")
-      )
-
-      val result = Modules.applyModules(config)
-
-      result shouldBe a[Failure[_]]
-      result.failure.exception.getMessage should include("Unknown module: 'unknown-module'")
-      result.failure.exception.getMessage should include("apt-updates")
-      result.failure.exception.getMessage should include("mise")
-      result.failure.exception.getMessage should include("docker-in-docker")
-    }
-
-    "apply mise module correctly" in {
-      val config = ProjectConfig(
-        name = "Test Project",
-        modules = List("mise"),
-        plugins = Plugins(vscode = List("existing-vscode"), intellij = List("existing-intellij"))
-      )
-
-      val result = Modules.applyModules(config).success.value
-
-      // Should add mise plugins
-      result.plugins.vscode should contain allOf ("hverlin.mise-vscode", "existing-vscode")
-      result.plugins.intellij should contain allOf ("com.github.l34130.mise", "existing-intellij")
-
-      // Should add mise mount
-      result.mounts should have length 1
-      val mount = result.mounts.head.asInstanceOf[Mount.ExplicitMount]
-      mount.source shouldBe "docker-mise-data-volume"
-      mount.target shouldBe "/mnt/mise-data"
-      mount.`type` shouldBe "volume"
-
-      // Should add mise container environment variable
-      result.containerEnv should have length 1
-      result.containerEnv.head shouldBe Env("MISE_DATA_DIR", "/mnt/mise-data")
-
-      // Should add mise remote environment variable for PATH
-      result.remoteEnv should have length 1
-      result.remoteEnv.head shouldBe Env("PATH", "${containerEnv:PATH}:/mnt/mise-data/shims")
-
-      // Should add mise setup commands
-      result.postCreateCommand should have length 1
-      result.postCreateCommand.head.cmd should include("mise install")
-      result.postCreateCommand.head.cmd should include("mise doctor")
-    }
-
-    "apply apt-updates module correctly" in {
-      val config = ProjectConfig(
-        name = "Test Project",
-        modules = List("apt-updates")
-      )
-
-      val result = Modules.applyModules(config).success.value
-
-      // Should add apt update commands
-      result.postCreateCommand should have length 1
-      result.postCreateCommand.head.cmd should include("apt-get update")
-      result.postCreateCommand.head.cmd should include("apt-get upgrade")
-      result.postCreateCommand.head.cmd should include("DEBIAN_FRONTEND=noninteractive")
-    }
-
-    "apply docker-in-docker module correctly" in {
-      val config = ProjectConfig(
-        name = "Test Project",
-        modules = List("docker-in-docker")
-      )
-
-      val result = Modules.applyModules(config).success.value
-
-      // Should add docker-in-docker feature
-      result.features should contain key "ghcr.io/devcontainers/features/docker-in-docker:2"
-      val dindFeature = result.features("ghcr.io/devcontainers/features/docker-in-docker:2")
-      dindFeature.asObject.value("version").value.asString.value shouldBe "latest"
-      dindFeature.asObject.value("moby").value.asBoolean.value shouldBe true
-      dindFeature.asObject.value("dockerDashComposeVersion").value.asString.value shouldBe "v2"
-
-      // Should add security capabilities
-      result.capAdd should contain("SYS_ADMIN")
-      result.securityOpt should contain("seccomp=unconfined")
-    }
-
-    "apply multiple modules in order" in {
-      val config = ProjectConfig(
-        name = "Test Project",
-        modules = List("apt-updates", "mise")
-      )
-
-      val result = Modules.applyModules(config).success.value
-
-      // Should have both modules' commands in order
-      result.postCreateCommand should have length 2
-      result.postCreateCommand(0).cmd should include("apt-get upgrade")
-      result.postCreateCommand(1).cmd should include("mise install")
-
-      // Should have mise plugins
-      result.plugins.vscode should contain("hverlin.mise-vscode")
-      result.plugins.intellij should contain("com.github.l34130.mise")
-
-      // Should have mise mount
-      result.mounts should have length 1
-    }
-
-    "preserve explicit config over module defaults" in {
-      val explicitFeature = "ghcr.io/devcontainers/features/custom:1"
-      val config = ProjectConfig(
-        name = "Test Project",
-        modules = List("mise"),
-        features = Map(explicitFeature -> Json.obj("version" -> Json.fromString("1.0"))),
-        plugins = Plugins(vscode = List("my-plugin"), intellij = List("my-intellij-plugin")),
-        postCreateCommand = List(Command("my custom command", "."))
-      )
-
-      val result = Modules.applyModules(config).success.value
-
-      // Explicit features should be preserved
-      result.features should contain key explicitFeature
-      result.features(explicitFeature).asObject.value("version").value.asString.value shouldBe "1.0"
-
-      // Explicit plugins should be at the end (have precedence)
-      result.plugins.vscode.last shouldBe "my-plugin"
-      result.plugins.intellij.last shouldBe "my-intellij-plugin"
-      // But module plugins should also be present
-      result.plugins.vscode should contain("hverlin.mise-vscode")
-      result.plugins.intellij should contain("com.github.l34130.mise")
-
-      // Explicit commands should be appended after module commands
-      result.postCreateCommand.last.cmd shouldBe "my custom command"
-      result.postCreateCommand.head.cmd should include("mise install")
-    }
-
-    "handle modules with overlapping contributions" in {
-      // Both modules contribute to postCreateCommand
-      val config = ProjectConfig(
-        name = "Test Project",
-        modules = List("apt-updates", "mise"),
-        postCreateCommand = List(Command("project setup", "/workspace"))
-      )
-
-      val result = Modules.applyModules(config).success.value
-
-      // Should have all commands: apt-updates, mise, then explicit
-      result.postCreateCommand should have length 3
-      result.postCreateCommand(0).cmd should include("apt-get")
-      result.postCreateCommand(1).cmd should include("mise")
-      result.postCreateCommand(2).cmd shouldBe "project setup"
-      result.postCreateCommand(2).workingDirectory shouldBe "/workspace"
-    }
-
-    "preserve other config fields when applying modules" in {
-      val config = ProjectConfig(
-        name = "Test Project",
-        image = "custom:image",
-        modules = List("mise"),
-        forwardPorts = List(ForwardPort.SamePort(3000)),
-        remoteUser = "customuser",
-        updateRemoteUserUID = false,
-        postStartCommand = List(Command("start script", "."))
-      )
-
-      val result = Modules.applyModules(config).success.value
-
-      // Non-module-affected fields should be preserved
-      result.name shouldBe "Test Project"
-      result.image shouldBe "custom:image"
-      result.forwardPorts shouldBe List(ForwardPort.SamePort(3000))
-      result.remoteUser shouldBe "customuser"
-      result.updateRemoteUserUID shouldBe false
-      result.postStartCommand shouldBe List(Command("start script", "."))
-    }
-  }
+class ModulesTest extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks {
 
   "Modules.applyModuleContribution" - {
-    "add features from module contribution" in {
-      val config = ProjectConfig(name = "Test")
-      val contribution = Modules.ModuleContribution(
-        features = Map("feature1" -> Json.obj(), "feature2" -> Json.fromString("value"))
-      )
 
-      val result = Modules.applyModuleContribution(config, contribution)
+    "features field" - {
+      val genFeatures: Gen[Map[String, Json]] = for {
+        size <- Gen.choose(0, 5)
+        keys <- Gen.listOfN(size, Gen.alphaNumStr.suchThat(_.nonEmpty))
+        values <- Gen.listOfN(
+          size,
+          Gen.oneOf(
+            Gen.const(Json.obj()),
+            Gen.alphaNumStr.map(Json.fromString),
+            Gen.choose(0, 100).map(Json.fromInt),
+            Gen.const(Json.True),
+            Gen.const(Json.False)
+          )
+        )
+      } yield keys.zip(values).toMap
 
-      result.features should contain key "feature1"
-      result.features should contain key "feature2"
+      "adds features to empty config" in {
+        forAll(genFeatures) { features =>
+          val baseConfig = ProjectConfig(name = "test")
+          val contribution = ModuleContribution(features = features)
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          // All features from contribution should be in result
+          features.keys.foreach { key =>
+            result.features should contain key key
+            result.features(key) shouldBe features(key)
+          }
+        }
+      }
+
+      "merges features with existing config (explicit features take precedence)" in {
+        forAll(genFeatures, genFeatures) { (moduleFeatures, explicitFeatures) =>
+          val baseConfig = ProjectConfig(name = "test", features = explicitFeatures)
+          val contribution = ModuleContribution(features = moduleFeatures)
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          // Explicit features should win for overlapping keys
+          explicitFeatures.keys.foreach { key =>
+            result.features(key) shouldBe explicitFeatures(key)
+          }
+
+          // Module features should be present for non-overlapping keys
+          (moduleFeatures.keySet -- explicitFeatures.keySet).foreach { key =>
+            result.features(key) shouldBe moduleFeatures(key)
+          }
+        }
+      }
     }
 
-    "add mounts from module contribution" in {
-      val config       = ProjectConfig(name = "Test")
-      val mount        = Mount.ExplicitMount("source", "target", "volume")
-      val contribution = Modules.ModuleContribution(mounts = List(mount))
+    "mounts field" - {
+      val genMount: Gen[Mount] = Gen.oneOf(
+        Gen.alphaNumStr.suchThat(_.nonEmpty).map(Mount.ShortMount(_)),
+        for {
+          source <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+          target <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+          mountType <- Gen.oneOf("volume", "bind", "tmpfs")
+        } yield Mount.ExplicitMount(source, target, mountType)
+      )
 
-      val result = Modules.applyModuleContribution(config, contribution)
+      val genMounts: Gen[List[Mount]] = Gen.listOf(genMount)
 
-      result.mounts should contain(mount)
+      "adds mounts to empty config" in {
+        forAll(genMounts) { mounts =>
+          val baseConfig = ProjectConfig(name = "test")
+          val contribution = ModuleContribution(mounts = mounts)
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          result.mounts shouldBe mounts
+        }
+      }
+
+      "prepends mounts to existing config" in {
+        forAll(genMounts, genMounts) { (moduleMounts, existingMounts) =>
+          val baseConfig = ProjectConfig(name = "test", mounts = existingMounts)
+          val contribution = ModuleContribution(mounts = moduleMounts)
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          // Module mounts should come first
+          result.mounts shouldBe (moduleMounts ++ existingMounts)
+        }
+      }
     }
 
-    "add vscode plugins from module contribution" in {
-      val config = ProjectConfig(name = "Test")
-      val contribution = Modules.ModuleContribution(
-        plugins = Plugins(intellij = Nil, vscode = List("plugin1", "plugin2"))
-      )
+    "vscode plugins field" - {
+      val genVscodePlugins: Gen[List[String]] =
+        Gen.listOf(Gen.alphaNumStr.suchThat(_.nonEmpty))
 
-      val result = Modules.applyModuleContribution(config, contribution)
+      "adds vscode plugins to empty config" in {
+        forAll(genVscodePlugins) { plugins =>
+          val baseConfig = ProjectConfig(name = "test")
+          val contribution = ModuleContribution(plugins = Plugins(vscode = plugins, intellij = Nil))
 
-      result.plugins.vscode should contain allOf ("plugin1", "plugin2")
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          result.plugins.vscode shouldBe plugins
+        }
+      }
+
+      "prepends vscode plugins to existing config" in {
+        forAll(genVscodePlugins, genVscodePlugins) { (modulePlugins, existingPlugins) =>
+          val baseConfig =
+            ProjectConfig(name = "test", plugins = Plugins(vscode = existingPlugins, intellij = Nil))
+          val contribution = ModuleContribution(plugins = Plugins(vscode = modulePlugins, intellij = Nil))
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          // Module plugins should come first
+          result.plugins.vscode shouldBe (modulePlugins ++ existingPlugins)
+        }
+      }
     }
 
-    "add intellij plugins from module contribution" in {
-      val config = ProjectConfig(name = "Test")
-      val contribution = Modules.ModuleContribution(
-        plugins = Plugins(intellij = List("intellij-plugin1", "intellij-plugin2"), vscode = Nil)
-      )
+    "intellij plugins field" - {
+      val genIntellijPlugins: Gen[List[String]] =
+        Gen.listOf(Gen.alphaNumStr.suchThat(_.nonEmpty))
 
-      val result = Modules.applyModuleContribution(config, contribution)
+      "adds intellij plugins to empty config" in {
+        forAll(genIntellijPlugins) { plugins =>
+          val baseConfig = ProjectConfig(name = "test")
+          val contribution = ModuleContribution(plugins = Plugins(vscode = Nil, intellij = plugins))
 
-      result.plugins.intellij should contain allOf ("intellij-plugin1", "intellij-plugin2")
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          result.plugins.intellij shouldBe plugins
+        }
+      }
+
+      "prepends intellij plugins to existing config" in {
+        forAll(genIntellijPlugins, genIntellijPlugins) { (modulePlugins, existingPlugins) =>
+          val baseConfig =
+            ProjectConfig(name = "test", plugins = Plugins(vscode = Nil, intellij = existingPlugins))
+          val contribution = ModuleContribution(plugins = Plugins(vscode = Nil, intellij = modulePlugins))
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          // Module plugins should come first
+          result.plugins.intellij shouldBe (modulePlugins ++ existingPlugins)
+        }
+      }
     }
 
-    "add containerEnv from module contribution" in {
-      val config = ProjectConfig(name = "Test")
-      val contribution = Modules.ModuleContribution(
-        containerEnv = List(Env("VAR1", "value1"), Env("VAR2", "value2"))
-      )
+    "containerEnv field" - {
+      val genEnv: Gen[Env] = for {
+        name  <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+        value <- Gen.alphaNumStr
+      } yield Env(name, value)
 
-      val result = Modules.applyModuleContribution(config, contribution)
+      val genEnvList: Gen[List[Env]] = Gen.listOf(genEnv)
 
-      result.containerEnv should contain allOf (Env("VAR1", "value1"), Env("VAR2", "value2"))
+      "adds containerEnv to empty config" in {
+        forAll(genEnvList) { envVars =>
+          val baseConfig = ProjectConfig(name = "test")
+          val contribution = ModuleContribution(containerEnv = envVars)
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          result.containerEnv shouldBe envVars
+        }
+      }
+
+      "prepends containerEnv to existing config" in {
+        forAll(genEnvList, genEnvList) { (moduleEnv, existingEnv) =>
+          val baseConfig = ProjectConfig(name = "test", containerEnv = existingEnv)
+          val contribution = ModuleContribution(containerEnv = moduleEnv)
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          // Module env should come first
+          result.containerEnv shouldBe (moduleEnv ++ existingEnv)
+        }
+      }
     }
 
-    "add remoteEnv from module contribution" in {
-      val config = ProjectConfig(name = "Test")
-      val contribution = Modules.ModuleContribution(
-        remoteEnv = List(Env("PATH", "/custom/path"), Env("HOME", "/custom/home"))
-      )
+    "remoteEnv field" - {
+      val genEnv: Gen[Env] = for {
+        name  <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+        value <- Gen.alphaNumStr
+      } yield Env(name, value)
 
-      val result = Modules.applyModuleContribution(config, contribution)
+      val genEnvList: Gen[List[Env]] = Gen.listOf(genEnv)
 
-      result.remoteEnv should contain allOf (
-        Env("PATH", "/custom/path"),
-        Env("HOME", "/custom/home")
-      )
+      "adds remoteEnv to empty config" in {
+        forAll(genEnvList) { envVars =>
+          val baseConfig = ProjectConfig(name = "test")
+          val contribution = ModuleContribution(remoteEnv = envVars)
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          result.remoteEnv shouldBe envVars
+        }
+      }
+
+      "prepends remoteEnv to existing config" in {
+        forAll(genEnvList, genEnvList) { (moduleEnv, existingEnv) =>
+          val baseConfig = ProjectConfig(name = "test", remoteEnv = existingEnv)
+          val contribution = ModuleContribution(remoteEnv = moduleEnv)
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          // Module env should come first
+          result.remoteEnv shouldBe (moduleEnv ++ existingEnv)
+        }
+      }
     }
 
-    "prepend postCreateCommands from module contribution" in {
-      val config = ProjectConfig(
-        name = "Test",
-        postCreateCommand = List(Command("existing", "."))
-      )
-      val contribution = Modules.ModuleContribution(
-        postCreateCommands = List(Command("module command", "."))
-      )
+    "postCreateCommands field" - {
+      val genCommand: Gen[Command] = for {
+        cmd    <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+        workDir <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+      } yield Command(cmd, workDir)
 
-      val result = Modules.applyModuleContribution(config, contribution)
+      val genCommands: Gen[List[Command]] = Gen.listOf(genCommand)
 
-      result.postCreateCommand should have length 2
-      result.postCreateCommand.head.cmd shouldBe "module command"
-      result.postCreateCommand.last.cmd shouldBe "existing"
+      "adds postCreateCommands to empty config" in {
+        forAll(genCommands) { commands =>
+          val baseConfig = ProjectConfig(name = "test")
+          val contribution = ModuleContribution(postCreateCommands = commands)
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          result.postCreateCommand shouldBe commands
+        }
+      }
+
+      "prepends postCreateCommands to existing config" in {
+        forAll(genCommands, genCommands) { (moduleCommands, existingCommands) =>
+          val baseConfig = ProjectConfig(name = "test", postCreateCommand = existingCommands)
+          val contribution = ModuleContribution(postCreateCommands = moduleCommands)
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          // Module commands should come first
+          result.postCreateCommand shouldBe (moduleCommands ++ existingCommands)
+        }
+      }
     }
 
-    "preserve explicit config when applying contribution" in {
-      val config = ProjectConfig(
-        name = "Test",
-        features = Map("explicit-feature" -> Json.obj()),
-        plugins = Plugins(intellij = Nil, vscode = List("explicit-plugin"))
-      )
-      val contribution = Modules.ModuleContribution(
-        features = Map("module-feature" -> Json.obj()),
-        plugins = Plugins(intellij = Nil, vscode = List("module-plugin"))
-      )
+    "capAdd field" - {
+      val genCapAdd: Gen[List[String]] =
+        Gen.listOf(Gen.alphaNumStr.suchThat(_.nonEmpty))
 
-      val result = Modules.applyModuleContribution(config, contribution)
+      "adds capAdd to empty config" in {
+        forAll(genCapAdd) { capabilities =>
+          val baseConfig = ProjectConfig(name = "test")
+          val contribution = ModuleContribution(capAdd = capabilities)
 
-      // Both should be present, explicit takes precedence in maps
-      result.features should contain key "explicit-feature"
-      result.features should contain key "module-feature"
-      result.plugins.vscode should contain allOf ("module-plugin", "explicit-plugin")
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          result.capAdd shouldBe capabilities
+        }
+      }
+
+      "prepends capAdd to existing config" in {
+        forAll(genCapAdd, genCapAdd) { (moduleCapAdd, existingCapAdd) =>
+          val baseConfig = ProjectConfig(name = "test", capAdd = existingCapAdd)
+          val contribution = ModuleContribution(capAdd = moduleCapAdd)
+
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
+
+          // Module capabilities should come first
+          result.capAdd shouldBe (moduleCapAdd ++ existingCapAdd)
+        }
+      }
     }
 
-    "handle empty module contribution" in {
-      val config = ProjectConfig(
-        name = "Test",
-        features = Map("feature" -> Json.obj()),
-        plugins = Plugins(intellij = Nil, vscode = List("plugin"))
-      )
-      val contribution = Modules.ModuleContribution()
+    "securityOpt field" - {
+      val genSecurityOpt: Gen[List[String]] =
+        Gen.listOf(Gen.alphaNumStr.suchThat(_.nonEmpty))
 
-      val result = Modules.applyModuleContribution(config, contribution)
+      "adds securityOpt to empty config" in {
+        forAll(genSecurityOpt) { securityOptions =>
+          val baseConfig = ProjectConfig(name = "test")
+          val contribution = ModuleContribution(securityOpt = securityOptions)
 
-      result should equal(config)
-    }
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
 
-    "add capAdd from module contribution" in {
-      val config = ProjectConfig(name = "Test")
-      val contribution = Modules.ModuleContribution(
-        capAdd = List("SYS_ADMIN", "NET_ADMIN")
-      )
+          result.securityOpt shouldBe securityOptions
+        }
+      }
 
-      val result = Modules.applyModuleContribution(config, contribution)
+      "prepends securityOpt to existing config" in {
+        forAll(genSecurityOpt, genSecurityOpt) { (moduleSecurityOpt, existingSecurityOpt) =>
+          val baseConfig = ProjectConfig(name = "test", securityOpt = existingSecurityOpt)
+          val contribution = ModuleContribution(securityOpt = moduleSecurityOpt)
 
-      result.capAdd should contain allOf ("SYS_ADMIN", "NET_ADMIN")
-    }
+          val result = Modules.applyModuleContribution(baseConfig, contribution)
 
-    "add securityOpt from module contribution" in {
-      val config = ProjectConfig(name = "Test")
-      val contribution = Modules.ModuleContribution(
-        securityOpt = List("seccomp=unconfined", "apparmor=unconfined")
-      )
-
-      val result = Modules.applyModuleContribution(config, contribution)
-
-      result.securityOpt should contain allOf ("seccomp=unconfined", "apparmor=unconfined")
-    }
-
-    "prepend capAdd and securityOpt from module contribution" in {
-      val config = ProjectConfig(
-        name = "Test",
-        capAdd = List("EXPLICIT_CAP"),
-        securityOpt = List("explicit=option")
-      )
-      val contribution = Modules.ModuleContribution(
-        capAdd = List("MODULE_CAP"),
-        securityOpt = List("module=option")
-      )
-
-      val result = Modules.applyModuleContribution(config, contribution)
-
-      result.capAdd should have length 2
-      result.capAdd.head shouldBe "MODULE_CAP"
-      result.capAdd.last shouldBe "EXPLICIT_CAP"
-      result.securityOpt should have length 2
-      result.securityOpt.head shouldBe "module=option"
-      result.securityOpt.last shouldBe "explicit=option"
+          // Module security options should come first
+          result.securityOpt shouldBe (moduleSecurityOpt ++ existingSecurityOpt)
+        }
+      }
     }
   }
 }
