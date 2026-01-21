@@ -10,16 +10,13 @@ import fansi.{Bold, Color}
 object Main {
   def main(args: Array[String]): Unit =
     args.headOption match {
-      case Some("init")                         => init()
-      case Some("generate")                     => generate()
-      case Some("check")                        => check()
-      case Some("version" | "--version" | "-v") =>
-        // drawn from build-time environment variable (or dev)
-        val version      = Version.release
-        val architecture = Version.architecture
-        println(s"${Color.Cyan(version)} ($architecture)")
+      case Some("init")     => init()
+      case Some("generate") => generate()
+      case Some("check")    => check()
       case Some("help" | "--help" | "-h") =>
         printUsage()
+      case Some("version" | "--version" | "-v") =>
+        printVersion()
       case Some(unknown) =>
         System.err.println(Color.Red(s"Unknown command: $unknown"))
         printUsage()
@@ -29,33 +26,6 @@ object Main {
         printUsage()
         sys.exit(1)
     }
-
-  private def printUsage(): Unit = {
-    val header          = Bold.On("Usage:") ++ " devenv " ++ Color.Cyan("<command>")
-    val commandsTitle   = Bold.On("Commands:")
-    val initCmd         = Bold.On(Color.Cyan("init"))
-    val generateCmd     = Bold.On(Color.Cyan("generate"))
-    val checkCmd        = Bold.On(Color.Cyan("check"))
-    val versionCmd      = Bold.On(Color.Cyan("version"))
-    val releaseStr      = Color.Cyan(Version.release)
-    val architectureStr = Color.Cyan(Version.architecture)
-    val versionTitle    = Bold.On("Version:")
-
-    println(
-      s"""$header
-         |
-         |$commandsTitle
-         |  $initCmd      Initialize .devcontainer directory structure
-         |  $generateCmd  Generate devcontainer.json files from .devenv config
-         |  $checkCmd     Ensure devcontainer.json files match current config
-         |  $versionCmd   Show devenv's version
-         |
-         |$versionTitle
-         |  release   $releaseStr
-         |  arch      $architectureStr
-         |""".stripMargin
-    )
-  }
 
   /** Sets up a .devcontainer directory with nested subdirectories.
     *
@@ -136,5 +106,54 @@ object Main {
         exception.printStackTrace()
         sys.exit(1)
     }
+  }
+
+  private def printUsage(): Unit = {
+    val header          = Bold.On("Usage:") ++ " devenv " ++ Color.Cyan("<command>")
+    val commandsTitle   = Bold.On("Commands:")
+    val initCmd         = Bold.On(Color.Cyan("init"))
+    val generateCmd     = Bold.On(Color.Cyan("generate"))
+    val checkCmd        = Bold.On(Color.Cyan("check"))
+    val versionCmd      = Bold.On(Color.Cyan("version"))
+    val releaseStr      = Color.Cyan(Version.release)
+    val architectureStr = Color.Cyan(Version.architecture)
+    val versionTitle    = Bold.On("Version:")
+
+    // display branch information if available, it is empty when running from source locally
+    val versionLines = List(
+      s"  release   $releaseStr",
+      s"  arch      $architectureStr"
+    ) ++ Version.branch.map(b => s"  branch    ${Color.Cyan(b)}")
+
+    val versionInfo = versionLines.mkString("\n")
+
+    println(
+      s"""$header
+         |
+         |Generates user-specific and shared devcontainer.json files from
+         |devenv.yaml configuration files.
+         |
+         |$commandsTitle
+         |  $initCmd      Initialize .devcontainer directory structure
+         |  $generateCmd  Generate devcontainer.json files from .devenv config
+         |  $checkCmd     Ensure devcontainer.json files match current config
+         |  $versionCmd   Show devenv's version
+         |
+         |$versionTitle
+         |$versionInfo
+         |""".stripMargin
+    )
+  }
+
+  private def printVersion(): Unit = {
+    // release and architecture come from CI build-time environment variables baked into the binary
+    // they are set to default values when running from source locally
+    val releaseStr      = Color.Cyan(Version.release)
+    val architectureStr = Version.architecture
+    // display branch information if available, it is empty when running from source locally
+    val branchInfoStr = Version.branch.fold("")(b => s" [$b]")
+
+    val versionStr = s"$releaseStr ($architectureStr)$branchInfoStr"
+    println(versionStr)
   }
 }

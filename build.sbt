@@ -54,6 +54,7 @@ lazy val cli = (project in file("cli"))
       "-H:+ReportExceptionStackTraces",    // Better error reporting during build
       "-EDEVENV_RELEASE",      // Bake the CI build version environment variable into the binary
       "-EDEVENV_ARCHITECTURE", // Bake the architecture environment variable into the binary
+      "-EDEVENV_BRANCH",       // Bake the branch name environment variable into the binary
       "--verbose",             // Show build progress
       // Optimization flags
       "-O2",        // Optimize for performance

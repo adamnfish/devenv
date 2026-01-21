@@ -170,7 +170,10 @@ To build a properly signed native binary locally, use the `release.sh` script. T
 
 The script will:
 - Set the `DEVENV_RELEASE` environment variable to the specified version
+- Append `-dev` to the version if building from a branch other than `main`
 - Set the `DEVENV_ARCHITECTURE` environment variable (auto-detected or specified)
+- Set the `DEVENV_BRANCH` environment variable (auto-detected from git or specified)
+- Display the build configuration and prompt for confirmation
 - Build a native binary with GraalVM Native Image
 
 The resulting binary will be at `cli/target/graalvm-native-image/devenv` and can be renamed and uploaded to the GitHub release.

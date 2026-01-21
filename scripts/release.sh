@@ -39,23 +39,70 @@ detect_architecture() {
   esac
 }
 
-if [ $# -lt 1 ] || [ $# -gt 2 ]; then
-  echo "Usage: $0 <release> [architecture]"
+# Function to detect current git branch
+detect_branch() {
+  if git rev-parse --git-dir > /dev/null 2>&1; then
+    git branch --show-current 2>/dev/null || echo "local"
+  else
+    echo "local"
+  fi
+}
+
+if [ $# -lt 1 ] || [ $# -gt 3 ]; then
+  echo "Usage: $0 <release> [architecture] [branch]"
   echo "Example: $0 1.0.0"
   echo "Example: $0 1.0.0 macos-arm64"
+  echo "Example: $0 1.0.0 macos-arm64 main"
   echo ""
   echo "If architecture is not provided, it will be auto-detected."
+  echo "If branch is not provided, it will be auto-detected from git (or default to 'local')."
   echo "Detected architecture: $(detect_architecture)"
+  echo "Detected branch: $(detect_branch)"
   exit 1
 fi
 
 RELEASE=$1
 ARCHITECTURE=${2:-$(detect_architecture)}
+BRANCH=${3:-$(detect_branch)}
+
+# Append "-dev" to version if branch is not "main" (if it doesn't already end with "-dev")
+if [ "$BRANCH" != "main" ]; then
+  if [[ ! "$RELEASE" =~ -dev$ ]]; then
+    RELEASE="${RELEASE}-dev"
+  fi
+fi
 
 export DEVENV_RELEASE="$RELEASE"
 export DEVENV_ARCHITECTURE="$ARCHITECTURE"
+export DEVENV_BRANCH="$BRANCH"
 
-echo "Building with DEVENV_RELEASE=$DEVENV_RELEASE and DEVENV_ARCHITECTURE=$DEVENV_ARCHITECTURE"
+# Display build configuration with highlighting
+BOLD='\033[1m'
+RESET='\033[0m'
+
+echo ""
+echo "======================================"
+echo "       BUILD CONFIGURATION"
+echo "======================================"
+echo ""
+echo -e "  Version:      ${BOLD}${DEVENV_RELEASE}${RESET}"
+echo -e "  Architecture: ${BOLD}${DEVENV_ARCHITECTURE}${RESET}"
+echo -e "  Branch:       ${BOLD}${DEVENV_BRANCH}${RESET}"
+echo ""
+if [ "$DEVENV_BRANCH" != "main" ]; then
+  echo "  ⚠️  Non-main branch detected!"
+  echo "  ⚠️  '-dev' appended to version"
+  echo ""
+fi
+echo "======================================"
+echo ""
+
+read -p "Continue with this configuration? (y/N) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+  echo "Build cancelled."
+  exit 1
+fi
 
 echo sbt "cli/GraalVMNativeImage/packageBin"
 

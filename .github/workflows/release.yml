@@ -57,8 +57,10 @@ jobs:
     - name: Build native image
       run: sbt "cli/GraalVMNativeImage/packageBin"
       env:
+        # these are configured in build.sbt as environment variables to bake into the binary
         DEVENV_RELEASE: ${{ needs.generate-version.outputs.version }}
         DEVENV_ARCHITECTURE: ${{ matrix.architecture }}
+        DEVENV_BRANCH: ${{ github.ref_name }}
 
     - name: Verify and rename binary
       run: |
