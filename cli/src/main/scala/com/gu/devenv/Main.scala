@@ -10,9 +10,14 @@ import fansi.{Bold, Color}
 object Main {
   def main(args: Array[String]): Unit =
     args.headOption match {
-      case Some("init")     => init()
-      case Some("generate") => generate()
-      case Some("check")    => check()
+      case Some("init")                         => init()
+      case Some("generate")                     => generate()
+      case Some("check")                        => check()
+      case Some("version" | "--version" | "-v") =>
+        // drawn from build-time environment variable (or dev)
+        val version      = Version.release
+        val architecture = Version.architecture
+        println(s"${Color.Cyan(version)} ($architecture)")
       case Some("help" | "--help" | "-h") =>
         printUsage()
       case Some(unknown) =>
@@ -26,19 +31,28 @@ object Main {
     }
 
   private def printUsage(): Unit = {
-    val header   = Bold.On("Usage:") ++ " devenv " ++ Color.Cyan("<command>")
-    val commands = Bold.On("Commands:")
-    val init     = Bold.On(Color.Cyan("init"))
-    val generate = Bold.On(Color.Cyan("generate"))
-    val check    = Bold.On(Color.Cyan("check"))
+    val header          = Bold.On("Usage:") ++ " devenv " ++ Color.Cyan("<command>")
+    val commandsTitle   = Bold.On("Commands:")
+    val initCmd         = Bold.On(Color.Cyan("init"))
+    val generateCmd     = Bold.On(Color.Cyan("generate"))
+    val checkCmd        = Bold.On(Color.Cyan("check"))
+    val versionCmd      = Bold.On(Color.Cyan("version"))
+    val releaseStr      = Color.Cyan(Version.release)
+    val architectureStr = Color.Cyan(Version.architecture)
+    val versionTitle    = Bold.On("Version:")
 
     println(
       s"""$header
          |
-         |$commands
-         |  $init      Initialize .devcontainer directory structure
-         |  $generate  Generate devcontainer.json files from .devenv config
-         |  $check     Ensure devcontainer.json files match current config
+         |$commandsTitle
+         |  $initCmd      Initialize .devcontainer directory structure
+         |  $generateCmd  Generate devcontainer.json files from .devenv config
+         |  $checkCmd     Ensure devcontainer.json files match current config
+         |  $versionCmd   Show devenv's version
+         |
+         |$versionTitle
+         |  release   $releaseStr
+         |  arch      $architectureStr
          |""".stripMargin
     )
   }
