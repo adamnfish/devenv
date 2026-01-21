@@ -131,7 +131,7 @@ The project also includes generation tests that validate the real program output
 
 ### Release
 
-The project uses GitHub Actions to build and publish a native binary for macOS ARM64 as a date-based development release.
+The project uses GitHub Actions to build and publish native binaries for macOS ARM64 and Linux AMD64 as date-based development releases.
 
 > [!WARNING]
 > The GitHub actions workflow does not properly sign the macOS binaries, so the workflow artifact is currently not usable.
@@ -144,7 +144,7 @@ The project uses GitHub Actions to build and publish a native binary for macOS A
 2. Click "Run workflow" and select the branch to build from
 
 3. GitHub Actions will automatically:
-    - Build native binaries for macOS ARM64
+    - Build native binaries for macOS ARM64 and Linux AMD64
     - Create a **draft** GitHub Release with date-based versioning (e.g., `20251103-143022`)
     - Name the binaries as `devenv-{date-version}-{platform}` (e.g., `devenv-20251103-143022-macos-arm64`)
     - Mark the release as a prerelease

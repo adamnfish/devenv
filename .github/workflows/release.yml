@@ -4,7 +4,7 @@ name: Release
 #
 # Steps:
 # 1. Generates a version based on the current date and time (appends -dev for non-default branches)
-# 2. Builds native binaries for macOS (ARM64) and Linux (AMD64, ARM64)
+# 2. Builds native binaries for macOS (ARM64) and Linux (AMD64)
 # 3. Creates a draft GitHub Release with the built binaries attached
 # 4. Marks the release as a prerelease if built from a non-default branch
 on:
@@ -37,8 +37,6 @@ jobs:
             architecture: macos-arm64
           - runner: ubuntu-latest
             architecture: linux-amd64
-          - runner: ubuntu-24.04-arm64
-            architecture: linux-arm64
     runs-on: ${{ matrix.runner }}
     steps:
     - name: Checkout code
@@ -98,12 +96,6 @@ jobs:
         name: devenv-linux-amd64
         path: .
 
-    - name: Download Linux ARM64 binary
-      uses: actions/download-artifact@v4
-      with:
-        name: devenv-linux-arm64
-        path: .
-
     - name: Create GitHub Release
       uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
       with:
@@ -112,7 +104,6 @@ jobs:
         files: |
           devenv-${{ needs.generate-version.outputs.version }}-macos-arm64
           devenv-${{ needs.generate-version.outputs.version }}-linux-amd64
-          devenv-${{ needs.generate-version.outputs.version }}-linux-arm64
         body: |
           ## devenv (Development Build)
           
@@ -133,12 +124,6 @@ jobs:
           **Linux (x86_64/AMD64):**
           ```bash
           curl -L -o ~/.local/bin/devenv https://github.com/${{ github.repository }}/releases/download/${{ needs.generate-version.outputs.version }}/devenv-${{ needs.generate-version.outputs.version }}-linux-amd64
-          chmod +x ~/.local/bin/devenv
-          ```
-          
-          **Linux (ARM64):**
-          ```bash
-          curl -L -o ~/.local/bin/devenv https://github.com/${{ github.repository }}/releases/download/${{ needs.generate-version.outputs.version }}/devenv-${{ needs.generate-version.outputs.version }}-linux-arm64
           chmod +x ~/.local/bin/devenv
           ```
         draft: true
