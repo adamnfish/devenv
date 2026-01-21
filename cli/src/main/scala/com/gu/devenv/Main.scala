@@ -109,23 +109,27 @@ object Main {
   }
 
   private def printUsage(): Unit = {
-    val header          = Bold.On("Usage:") ++ " devenv " ++ Color.Cyan("<command>")
-    val commandsTitle   = Bold.On("Commands:")
-    val initCmd         = Bold.On(Color.Cyan("init"))
-    val generateCmd     = Bold.On(Color.Cyan("generate"))
-    val checkCmd        = Bold.On(Color.Cyan("check"))
-    val versionCmd      = Bold.On(Color.Cyan("version"))
-    val releaseStr      = Color.Cyan(Version.release)
-    val architectureStr = Color.Cyan(Version.architecture)
-    val versionTitle    = Bold.On("Version:")
-
-    // display branch information if available, it is empty when running from source locally
-    val versionLines = List(
-      s"  release   $releaseStr",
-      s"  arch      $architectureStr"
-    ) ++ Version.branch.map(b => s"  branch    ${Color.Cyan(b)}")
-
-    val versionInfo = versionLines.mkString("\n")
+    val header = Bold.On("Usage:") ++ " devenv " ++ Color.Cyan("<command>")
+    // devenv commands
+    val commandsTitle = Bold.On("Commands:")
+    val initCmd       = Bold.On(Color.Cyan("init"))
+    val generateCmd   = Bold.On(Color.Cyan("generate"))
+    val checkCmd      = Bold.On(Color.Cyan("check"))
+    val versionCmd    = Bold.On(Color.Cyan("version"))
+    // version information
+    val versionTitle   = Bold.On("Version:")
+    val releaseLineStr = s"  release   ${Version.release}"
+    val archLineStr    = Version.architecture.map(a => s"  arch      $a")
+    val branchLineStr  = Version.branch.map(b => s"  branch    $b")
+    val devModeNoteStr =
+      if (Version.architecture.isEmpty && Version.branch.isEmpty) {
+        Some("  (running in development mode)")
+      } else {
+        None
+      }
+    val versionInfoString =
+      List(Some(releaseLineStr), archLineStr, branchLineStr, devModeNoteStr).flatten
+        .mkString("\n")
 
     println(
       s"""$header
@@ -140,20 +144,19 @@ object Main {
          |  $versionCmd   Show devenv's version
          |
          |$versionTitle
-         |$versionInfo
+         |$versionInfoString
          |""".stripMargin
     )
   }
 
   private def printVersion(): Unit = {
-    // release and architecture come from CI build-time environment variables baked into the binary
-    // they are set to default values when running from source locally
-    val releaseStr      = Color.Cyan(Version.release)
-    val architectureStr = Version.architecture
-    // display branch information if available, it is empty when running from source locally
-    val branchInfoStr = Version.branch.fold("")(b => s" [$b]")
+    // these properties are set at build time via environment variables
+    // release defaults to "dev" for local development builds
+    val releaseStr = Bold.On(Version.release).toString
+    // architecture and branch have no fallbacks and will be empty when running locally
+    val architectureStr = Version.architecture.fold("")(arch => s" ($arch)")
+    val branchStr       = Version.branch.fold("")(branch => s" [$branch]")
 
-    val versionStr = s"$releaseStr ($architectureStr)$branchInfoStr"
-    println(versionStr)
+    println(s"$releaseStr$architectureStr$branchStr")
   }
 }

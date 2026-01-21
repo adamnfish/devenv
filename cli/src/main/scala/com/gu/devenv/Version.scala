@@ -24,9 +24,9 @@ object Version {
     *
     * This environment variable is allowlisted in the build.sbt settings for the cli project.
     *
-    * Defaults to "jvm" for local development builds (running via sbt or JVM packaging).
+    * Returns None for local development builds (running via sbt or JVM packaging).
     */
-  val architecture: String = sys.env.getOrElse("DEVENV_ARCHITECTURE", "jvm")
+  val architecture: Option[String] = sys.env.get("DEVENV_ARCHITECTURE")
 
   /** The branch from which this devenv binary was built.
     *
