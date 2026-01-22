@@ -47,18 +47,28 @@ lazy val cli = (project in file("cli"))
     bashScriptExtraDefines ++= cliJvmOptions.map(opt => s"""addJava "$opt""""),
 
     // GraalVM Native Image configuration
-    graalVMNativeImageOptions ++= Seq(
-      "--no-fallback",                     // Fail if native image cannot be built
-      "--initialize-at-build-time",        // Initialize most classes at build time
-      "--enable-url-protocols=http,https", // Enable HTTP/HTTPS
-      "-H:+ReportExceptionStackTraces",    // Better error reporting during build
-      "-EDEVENV_RELEASE",      // Bake the CI build version environment variable into the binary
-      "-EDEVENV_ARCHITECTURE", // Bake the architecture environment variable into the binary
-      "--verbose",             // Show build progress
-      // Optimization flags
-      "-O2",        // Optimize for performance
-      "--gc=serial" // Use serial GC (suitable for CLI tools)
-    ),
+    graalVMNativeImageOptions ++= {
+      // Use compatibility mode for Linux builds to support older CPUs and containers
+      // macOS builds use native optimizations for best performance
+      val marchOption = sys.env.get("DEVENV_ARCHITECTURE") match {
+        case Some(arch) if arch.startsWith("linux") => Seq("-march=compatibility")
+        case _                                      => Seq.empty
+      }
+
+      Seq(
+        "--no-fallback",                     // Fail if native image cannot be built
+        "--initialize-at-build-time",        // Initialize most classes at build time
+        "--enable-url-protocols=http,https", // Enable HTTP/HTTPS
+        "-H:+ReportExceptionStackTraces",    // Better error reporting during build
+        "-EDEVENV_RELEASE",      // Bake the CI build version environment variable into the binary
+        "-EDEVENV_ARCHITECTURE", // Bake the architecture environment variable into the binary
+        "-EDEVENV_BRANCH",       // Bake the branch name environment variable into the binary
+        "--verbose",             // Show build progress
+        // Optimization flags
+        "-O2",        // Optimize for performance
+        "--gc=serial" // Use serial GC (suitable for CLI tools)
+      ) ++ marchOption
+    },
     // Output binary name
     GraalVMNativeImage / name := "devenv"
   )

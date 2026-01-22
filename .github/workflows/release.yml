@@ -1,7 +1,14 @@
 name: Release
 
+# This workflow creates a draft GitHub Release with native binaries.
+#
+# Steps:
+# 1. Generates a version based on the current date and time (appends -dev for non-default branches)
+# 2. Builds native binaries for macOS (ARM64) and Linux (AMD64)
+# 3. Creates a draft GitHub Release with the built binaries attached
+# 4. Marks the release as a prerelease if built from a non-default branch
 on:
-  # Manually trigger the workflow to cut a draft release
+  # Manually trigger the workflow to create a draft release
   workflow_dispatch:
 
 jobs:
@@ -14,12 +21,23 @@ jobs:
       id: version
       run: |
         VERSION="$(date +%Y%m%d-%H%M%S)"
+        # Append -dev suffix for non-default branch builds to distinguish them from "production" releases
+        if [ "${{ github.ref_name }}" != "${{ github.event.repository.default_branch }}" ]; then
+          VERSION="${VERSION}-dev"
+        fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Generated version: $VERSION"
 
-  build-native-image-macos:
+  build-native-images:
     needs: generate-version
-    runs-on: macos-15
+    strategy:
+      matrix:
+        include:
+          - runner: macos-15
+            architecture: macos-arm64
+          - runner: ubuntu-latest
+            architecture: linux-amd64
+    runs-on: ${{ matrix.runner }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -37,25 +55,27 @@ jobs:
     - name: Build native image
       run: sbt "cli/GraalVMNativeImage/packageBin"
       env:
+        # these are configured in build.sbt as environment variables to bake into the binary
         DEVENV_RELEASE: ${{ needs.generate-version.outputs.version }}
-        DEVENV_ARCHITECTURE: "macos-arm64"
+        DEVENV_ARCHITECTURE: ${{ matrix.architecture }}
+        DEVENV_BRANCH: ${{ github.ref_name }}
 
     - name: Verify and rename binary
       run: |
         ls -lh cli/target/graalvm-native-image/devenv
         file cli/target/graalvm-native-image/devenv
         ./cli/target/graalvm-native-image/devenv --help || true
-        cp cli/target/graalvm-native-image/devenv devenv-${{ needs.generate-version.outputs.version }}-macos-arm64
+        cp cli/target/graalvm-native-image/devenv devenv-${{ needs.generate-version.outputs.version }}-${{ matrix.architecture }}
 
     - name: Upload native binary
       uses: actions/upload-artifact@v4
       with:
-        name: devenv-macos-arm64
-        path: devenv-${{ needs.generate-version.outputs.version }}-macos-arm64
+        name: devenv-${{ matrix.architecture }}
+        path: devenv-${{ needs.generate-version.outputs.version }}-${{ matrix.architecture }}
         retention-days: 90
 
   create-release:
-    needs: [generate-version, build-native-image-macos]
+    needs: [generate-version, build-native-images]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -70,6 +90,12 @@ jobs:
         name: devenv-macos-arm64
         path: .
 
+    - name: Download Linux AMD64 binary
+      uses: actions/download-artifact@v4
+      with:
+        name: devenv-linux-amd64
+        path: .
+
     - name: Create GitHub Release
       uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
       with:
@@ -77,22 +103,29 @@ jobs:
         name: devenv ${{ needs.generate-version.outputs.version }}
         files: |
           devenv-${{ needs.generate-version.outputs.version }}-macos-arm64
+          devenv-${{ needs.generate-version.outputs.version }}-linux-amd64
         body: |
           ## devenv (Development Build)
           
           **Build Date:** ${{ needs.generate-version.outputs.version }}
           
-          ⚠️ This is a development release built from the `${{ github.ref_name }}` branch.
+          This release was built from the `${{ github.ref_name }}` branch.
           
           ### Installation
           
-          The release includes a native binary for MacOS architectures.
+          The release includes native binaries for macOS and Linux architectures.
           
           **macOS (Apple Silicon):**
           ```bash
           curl -L -o ~/.local/bin/devenv https://github.com/${{ github.repository }}/releases/download/${{ needs.generate-version.outputs.version }}/devenv-${{ needs.generate-version.outputs.version }}-macos-arm64
           chmod +x ~/.local/bin/devenv
           ```
+          
+          **Linux (x86_64/AMD64):**
+          ```bash
+          curl -L -o ~/.local/bin/devenv https://github.com/${{ github.repository }}/releases/download/${{ needs.generate-version.outputs.version }}/devenv-${{ needs.generate-version.outputs.version }}-linux-amd64
+          chmod +x ~/.local/bin/devenv
+          ```
         draft: true
-        prerelease: true
-
+        # Mark as prerelease for non-default branch builds (e.g., dev branches)
+        prerelease: ${{ github.ref_name != github.event.repository.default_branch }}
