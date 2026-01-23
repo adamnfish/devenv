@@ -14,7 +14,7 @@ import io.circe.generic.extras.auto.*
 import java.nio.file.Path
 
 object Config {
-  implicit val config: Configuration = Configuration.default.withDefaults
+  given Configuration = Configuration.default.withDefaults
 
   def loadProjectConfig(path: Path): Try[ProjectConfig] =
     for {

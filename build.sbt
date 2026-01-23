@@ -21,9 +21,12 @@ val cliJvmOptions = Seq(
   "-Xmx512m"                 // Reasonable max heap
 )
 
-val circeVersion     = "0.14.15"
-val fansiVersion     = "0.5.1"
-val scalatestVersion = "3.2.19"
+// shared library versions
+val circeVersion         = "0.14.15"
+val sttpVersion          = "4.0.15"
+val scalatestVersion     = "3.2.19"
+val scalaCheckVersion    = "1.19.0"
+val scalatestPlusVersion = "3.2.19.0"
 
 // empty root project to aggregate all subprojects
 lazy val root = (project in file("."))
@@ -39,7 +42,12 @@ lazy val cli = (project in file("cli"))
     name    := "devenv",
     version := "0.1.0",
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "fansi" % fansiVersion
+      "com.lihaoyi"                   %% "fansi"           % "0.5.1",
+      "com.softwaremill.sttp.client4" %% "core"            % sttpVersion,
+      "com.softwaremill.sttp.client4" %% "circe"           % sttpVersion,
+      "org.scalatest"                 %% "scalatest"       % scalatestVersion     % Test,
+      "org.scalacheck"                %% "scalacheck"      % scalaCheckVersion    % Test,
+      "org.scalatestplus"             %% "scalacheck-1-19" % scalatestPlusVersion % Test
     ),
     Compile / mainClass  := Some("com.gu.devenv.Main"),
     executableScriptName := "devenv",
@@ -85,9 +93,9 @@ lazy val core = project
       "io.circe"          %% "circe-yaml-scalayaml" % "0.16.1",
       "com.lihaoyi"       %% "fansi"                % "0.5.1",
       "org.typelevel"     %% "cats-core"            % "2.13.0",
-      "org.scalatest"     %% "scalatest"            % scalatestVersion % Test,
-      "org.scalacheck"    %% "scalacheck"           % "1.19.0"         % Test,
-      "org.scalatestplus" %% "scalacheck-1-19"      % "3.2.19.0"       % Test
+      "org.scalatest"     %% "scalatest"            % scalatestVersion     % Test,
+      "org.scalacheck"    %% "scalacheck"           % scalaCheckVersion    % Test,
+      "org.scalatestplus" %% "scalacheck-1-19"      % scalatestPlusVersion % Test
     )
   )
 

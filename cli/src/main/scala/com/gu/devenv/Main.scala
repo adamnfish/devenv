@@ -1,6 +1,7 @@
 package com.gu.devenv
 
 import com.gu.devenv.modules.Modules.builtInModules
+
 import scala.util.{Failure, Success}
 import java.nio.file.Paths
 import fansi.{Bold, Color}
@@ -13,6 +14,7 @@ object Main {
       case Some("init")     => init()
       case Some("generate") => generate()
       case Some("check")    => check()
+      case Some("update")   => update()
       case Some("help" | "--help" | "-h") =>
         printUsage()
         ExitCode.Success
@@ -27,7 +29,10 @@ object Main {
         printUsage()
         ExitCode.InvalidUsage
     }
-    sys.exit(exitCode.code)
+    if (exitCode != ExitCode.Success) {
+      // for convenience in dev mode, only terminate with non-default exit codes
+      sys.exit(exitCode.code)
+    }
   }
 
   /** Sets up a .devcontainer directory with nested subdirectories.
@@ -108,14 +113,40 @@ object Main {
     }
   }
 
+  def update(): ExitCode = {
+    val currentVersion = Version.release
+    val architecture   = Version.architecture
+    val branch         = Version.branch
+
+    val result = Releases
+      .latestRelease()
+      .map { latestRelease =>
+        Releases.checkForUpdate(
+          currentVersion,
+          architecture,
+          branch,
+          latestRelease
+        )
+      }
+    Releases.printUpdateCheckResult(result, currentVersion, architecture)
+    result match {
+      case Success(updateResult) if updateResult.successful =>
+        ExitCode.Success
+      case _ =>
+        ExitCode.Error
+    }
+  }
+
   private def printUsage(): Unit = {
-    val header = Bold.On("Usage:") ++ " devenv " ++ Color.Cyan("<command>")
+    val header = s"${Bold.On("Usage:")} devenv <command>"
     // devenv commands
     val commandsTitle = Bold.On("Commands:")
     val initCmd       = Bold.On(Color.Cyan("init"))
     val generateCmd   = Bold.On(Color.Cyan("generate"))
     val checkCmd      = Bold.On(Color.Cyan("check"))
     val versionCmd    = Bold.On(Color.Cyan("version"))
+    val updateCmd     = Bold.On(Color.Cyan("update"))
+    val helpCmd       = Bold.On(Color.Cyan("help"))
     // version information
     val versionTitle   = Bold.On("Version:")
     val releaseLineStr = s"  release   ${Version.release}"
@@ -141,7 +172,11 @@ object Main {
          |  $initCmd      Initialize .devcontainer directory structure
          |  $generateCmd  Generate devcontainer.json files from .devenv config
          |  $checkCmd     Ensure devcontainer.json files match current config
+         |
          |  $versionCmd   Show devenv's version
+         |  $updateCmd    Check for updates to devenv's CLI
+         |
+         |  $helpCmd      Show this help text
          |
          |$versionTitle
          |$versionInfoString
