@@ -119,7 +119,7 @@ object Main {
     val branch         = Version.branch
 
     val result = Releases
-      .latestRelease()
+      .fetchLatestRelease()
       .map { latestRelease =>
         Releases.checkForUpdate(
           currentVersion,
@@ -128,7 +128,9 @@ object Main {
           latestRelease
         )
       }
-    Releases.printUpdateCheckResult(result, currentVersion, architecture)
+    println(
+      Releases.formatUpdateCheckResult(result, currentVersion, architecture)
+    )
     result match {
       case Success(updateResult) if updateResult.successful =>
         ExitCode.Success
