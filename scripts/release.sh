@@ -104,7 +104,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
   exit 1
 fi
 
-echo sbt "cli/GraalVMNativeImage/packageBin"
+sbt "cli/GraalVMNativeImage/packageBin"
 
 BINARY_NAME="devenv-$RELEASE-$ARCHITECTURE"
 echo "Binary name in GitHub release: $BINARY_NAME"

@@ -179,6 +179,14 @@ case class UserConfigPaths(
     devenvConf: Path
 )
 
+case class FileDiff(
+    path: String,
+    expected: String,
+    actual: String
+)
+
+// results
+
 case class InitResult(
     devcontainerStatus: FileSystemStatus,
     userStatus: FileSystemStatus,
@@ -187,39 +195,29 @@ case class InitResult(
     devenvStatus: FileSystemStatus
 )
 
-sealed trait GenerateResult
-
-object GenerateResult {
-  case class Success(
+enum GenerateResult(val successful: Boolean) {
+  case Success(
       userDevcontainerStatus: FileSystemStatus,
       sharedDevcontainerStatus: FileSystemStatus
-  ) extends GenerateResult
+  ) extends GenerateResult(successful = true)
 
-  case object NotInitialized extends GenerateResult
+  case NotInitialized extends GenerateResult(successful = false)
 
-  case object ConfigNotCustomized extends GenerateResult
+  case ConfigNotCustomized extends GenerateResult(successful = false)
 }
 
-sealed trait CheckResult
-
-object CheckResult {
-  case class Match(
+enum CheckResult(val successful: Boolean) {
+  case Match(
       userPath: String,
       sharedPath: String
-  ) extends CheckResult
+  ) extends CheckResult(successful = true)
 
-  case class Mismatch(
+  case Mismatch(
       userMismatch: Option[FileDiff],
       sharedMismatch: Option[FileDiff],
       userPath: String,
       sharedPath: String
-  ) extends CheckResult
+  ) extends CheckResult(successful = false)
 
-  case object NotInitialized extends CheckResult
+  case NotInitialized extends CheckResult(successful = false)
 }
-
-case class FileDiff(
-    path: String,
-    expected: String,
-    actual: String
-)
