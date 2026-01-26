@@ -38,12 +38,16 @@ object Config {
       projectConfig <- json.as[ProjectConfig].toTry
     } yield projectConfig
 
-  def parseUserConfig(contents: String): Try[UserConfig] =
+  def parseUserConfig(contents: String): Try[UserConfig] = {
     // Handle empty files or files with only comments/whitespace
-    val trimmedLines = contents.linesIterator.map(_.trim).filterNot(_.isEmpty)
-    val hasOnlyComments = trimmedLines.forall(_.startsWith("#"))
+    def isEmptyOrCommentsOnly(text: String): Boolean = {
+      text.linesIterator
+        .map(_.trim)
+        .filter(_.nonEmpty)
+        .forall(_.startsWith("#"))
+    }
     
-    if (contents.trim.isEmpty || hasOnlyComments) {
+    if (isEmptyOrCommentsOnly(contents)) {
       scala.util.Success(UserConfig(None, None))
     } else {
       for {
@@ -51,6 +55,7 @@ object Config {
         userConfig <- json.as[UserConfig].toTry
       } yield userConfig
     }
+  }
 
   def mergeConfigs(
       projectConfig: ProjectConfig,
