@@ -138,6 +138,27 @@ class ConfigTest
         "dotfiles" as None
       )
     }
+
+    "parses a user config file with inline comments" in {
+      val configWithInlineComments = """plugins:  # User plugins
+                                       |  intellij:
+                                       |    - "com.example.plugin"  # Example plugin
+                                       |  vscode:
+                                       |    - "example.vscode-plugin"
+                                       |""".stripMargin
+      val Success(userConfig) =
+        Config.parseUserConfig(configWithInlineComments).success
+
+      userConfig should have(
+        "plugins" as Some(
+          Plugins(
+            List("com.example.plugin"),
+            List("example.vscode-plugin")
+          )
+        ),
+        "dotfiles" as None
+      )
+    }
   }
 
   "mergeConfigs" - {
