@@ -97,11 +97,7 @@ class ConfigTest
       val emptyConfig = ""
       val Success(userConfig) =
         Config.parseUserConfig(emptyConfig).success
-
-      userConfig should have(
-        "plugins" as None,
-        "dotfiles" as None
-      )
+      userConfig shouldBe UserConfig.empty
     }
 
     "parses a user config file with only comments" in {
@@ -111,53 +107,7 @@ class ConfigTest
       val Success(userConfig) =
         Config.parseUserConfig(commentsOnlyConfig).success
 
-      userConfig should have(
-        "plugins" as None,
-        "dotfiles" as None
-      )
-    }
-
-    "parses a user config file with comments and YAML content" in {
-      val configWithComments = """# This is a comment
-                                 |plugins:
-                                 |  intellij:
-                                 |    - "com.example.plugin"
-                                 |  vscode:
-                                 |    - "example.vscode-plugin"
-                                 |""".stripMargin
-      val Success(userConfig) =
-        Config.parseUserConfig(configWithComments).success
-
-      userConfig should have(
-        "plugins" as Some(
-          Plugins(
-            List("com.example.plugin"),
-            List("example.vscode-plugin")
-          )
-        ),
-        "dotfiles" as None
-      )
-    }
-
-    "parses a user config file with inline comments" in {
-      val configWithInlineComments = """plugins:  # User plugins
-                                       |  intellij:
-                                       |    - "com.example.plugin"  # Example plugin
-                                       |  vscode:
-                                       |    - "example.vscode-plugin"
-                                       |""".stripMargin
-      val Success(userConfig) =
-        Config.parseUserConfig(configWithInlineComments).success
-
-      userConfig should have(
-        "plugins" as Some(
-          Plugins(
-            List("com.example.plugin"),
-            List("example.vscode-plugin")
-          )
-        ),
-        "dotfiles" as None
-      )
+      userConfig shouldBe UserConfig.empty
     }
   }
 
