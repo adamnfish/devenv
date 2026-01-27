@@ -30,6 +30,9 @@ case class UserConfig(
     plugins: Option[Plugins],
     dotfiles: Option[Dotfiles]
 )
+object UserConfig {
+  val empty = UserConfig(None, None)
+}
 
 enum ForwardPort {
   case SamePort(port: Int)
