@@ -38,16 +38,8 @@ object Config {
       projectConfig <- json.as[ProjectConfig].toTry
     } yield projectConfig
 
-  def parseUserConfig(contents: String): Try[UserConfig] = {
-    // Handle empty files or files with only comments/whitespace
-    def isEmptyOrCommentsOnly(text: String): Boolean = {
-      text.linesIterator
-        .map(_.trim)
-        .filter(_.nonEmpty)
-        .forall(_.startsWith("#"))
-    }
-    
-    if (isEmptyOrCommentsOnly(contents)) {
+  def parseUserConfig(contents: String): Try[UserConfig] =
+    if (yamlIsEmpty(contents)) {
       scala.util.Success(UserConfig(None, None))
     } else {
       for {
@@ -55,7 +47,6 @@ object Config {
         userConfig <- json.as[UserConfig].toTry
       } yield userConfig
     }
-  }
 
   def mergeConfigs(
       projectConfig: ProjectConfig,
@@ -189,6 +180,15 @@ object Config {
     Json.obj(
       envList.map(env => env.name -> Json.fromString(env.value)): _*
     )
+
+  /** Parsing an empty YAML file throws an exception, but an empty YAML file is valid and should
+    * result in an empty configuration. We check for empty contents here.
+    */
+  private def yamlIsEmpty(text: String): Boolean =
+    text.linesIterator
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .forall(_.startsWith("#"))
 
   private def applyPlugins(
       projectPlugins: Plugins,
