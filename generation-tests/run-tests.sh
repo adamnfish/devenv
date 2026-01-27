@@ -352,6 +352,34 @@ cd /
 rm -rf "$TEMP_DIR"
 
 # ============================================
+# Test 5: Hello World Command
+# ============================================
+run_test "Hello World Command"
+
+TEMP_DIR=$(mktemp -d)
+cd "$TEMP_DIR"
+
+info "Running: devenv hello-world"
+OUTPUT=$("$BINARY" hello-world 2>&1)
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -eq 0 ]; then
+    pass "hello-world command succeeded"
+else
+    fail "hello-world command failed" "Exit code: $EXIT_CODE"
+fi
+
+if echo "$OUTPUT" | grep -q "Hello, World!"; then
+    pass "Output contains 'Hello, World!'"
+else
+    fail "Output missing 'Hello, World!'" "Got: $OUTPUT"
+fi
+
+# Cleanup
+cd /
+rm -rf "$TEMP_DIR"
+
+# ============================================
 # Test Summary
 # ============================================
 echo ""

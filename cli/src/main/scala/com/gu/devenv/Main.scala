@@ -15,6 +15,9 @@ object Main {
       case Some("generate") => generate()
       case Some("check")    => check()
       case Some("update")   => update()
+      case Some("hello-world") =>
+        helloWorld()
+        ExitCode.Success
       case Some("help" | "--help" | "-h") =>
         printUsage()
         ExitCode.Success
@@ -148,6 +151,7 @@ object Main {
     val checkCmd      = Bold.On(Color.Cyan("check"))
     val versionCmd    = Bold.On(Color.Cyan("version"))
     val updateCmd     = Bold.On(Color.Cyan("update"))
+    val helloWorldCmd = Bold.On(Color.Cyan("hello-world"))
     val helpCmd       = Bold.On(Color.Cyan("help"))
     // version information
     val versionTitle   = Bold.On("Version:")
@@ -178,6 +182,8 @@ object Main {
          |  $versionCmd   Show devenv's version
          |  $updateCmd    Check for updates to devenv's CLI
          |
+         |  $helloWorldCmd  Simple command to verify the program runs
+         |
          |  $helpCmd      Show this help text
          |
          |$versionTitle
@@ -195,6 +201,10 @@ object Main {
     val branchStr       = Version.branch.fold("")(branch => s" [$branch]")
 
     println(s"$releaseStr$architectureStr$branchStr")
+  }
+
+  private def helloWorld(): Unit = {
+    println("Hello, World!")
   }
 
   /** Exit codes for the devenv CLI tool.
