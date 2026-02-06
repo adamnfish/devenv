@@ -92,6 +92,23 @@ class ConfigTest
         )
       )
     }
+
+    "parses an empty user config file" in {
+      val emptyConfig = ""
+      val Success(userConfig) =
+        Config.parseUserConfig(emptyConfig).success
+      userConfig shouldBe UserConfig.empty
+    }
+
+    "parses a user config file with only comments" in {
+      val commentsOnlyConfig = """# This is a comment
+                                 |# Another comment
+                                 |""".stripMargin
+      val Success(userConfig) =
+        Config.parseUserConfig(commentsOnlyConfig).success
+
+      userConfig shouldBe UserConfig.empty
+    }
   }
 
   "mergeConfigs" - {
