@@ -89,10 +89,11 @@ object Config {
       )
 
       val baseConfig = JsonObject(
-        "name"           -> config.name.asJson,
-        "image"          -> config.image.asJson,
-        "customizations" -> customizations.asJson,
-        "forwardPorts"   -> config.forwardPorts.asJson
+        "name"            -> config.name.asJson,
+        "workspaceFolder" -> s"/workspaces/${config.name}".asJson,
+        "image"           -> config.image.asJson,
+        "customizations"  -> customizations.asJson,
+        "forwardPorts"    -> config.forwardPorts.asJson
       )
 
       // Add optional fields if they exist
