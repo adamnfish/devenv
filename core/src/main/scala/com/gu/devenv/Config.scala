@@ -1,17 +1,16 @@
 package com.gu.devenv
 
+import com.gu.devenv.ForwardPort.{SamePort, DifferentPorts}
 import com.gu.devenv.modules.Modules
 import com.gu.devenv.modules.Modules.Module
-import io.circe.Json
-import io.circe.syntax.*
-import io.circe.JsonObject
-
-import scala.util.Try
-import io.circe.yaml.scalayaml.parser
+import io.circe.{Json, JsonObject}
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.auto.*
+import io.circe.syntax.*
+import io.circe.yaml.scalayaml.parser
 
 import java.nio.file.Path
+import scala.util.Try
 
 object Config {
   given Configuration = Configuration.default.withDefaults
@@ -92,7 +91,11 @@ object Config {
         "name"           -> config.name.asJson,
         "image"          -> config.image.asJson,
         "customizations" -> customizations.asJson,
-        "forwardPorts"   -> config.forwardPorts.asJson
+        "forwardPorts"   -> config.forwardPorts.asJson,
+        "runArgs"        -> config.forwardPorts.flatMap{
+          case SamePort(p) => List("-p", s"$p:$p")
+          case DifferentPorts(hp, cp) => List("-p", s"$hp:$cp")
+        }.asJson
       )
 
       // Add optional fields if they exist
