@@ -1,3 +1,7 @@
+> [!IMPORTANT]
+> This project has moved to the Guardian's GitHub organisation:
+> [github/guardian/devenv](https://github.com/guardian/devenv)
+
 # devenv
 
 A CLI tool for managing devcontainer configurations for your projects.
